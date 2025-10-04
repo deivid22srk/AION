@@ -36,6 +36,7 @@ import com.aion.aicontroller.data.LocalVisionModel
 import com.aion.aicontroller.local.LocalModelManager
 import com.aion.aicontroller.service.AIAccessibilityService
 import com.aion.aicontroller.service.AIControlService
+import com.aion.aicontroller.service.ModelDownloadService
 import com.aion.aicontroller.ui.theme.AIONTheme
 import kotlinx.coroutines.launch
 
@@ -44,18 +45,33 @@ class MainActivity : ComponentActivity() {
     private lateinit var preferencesManager: PreferencesManager
     private lateinit var modelManager: LocalModelManager
     private var aiControlService: AIControlService? = null
-    private var serviceBound = false
+    private var downloadService: ModelDownloadService? = null
+    private var aiServiceBound = false
+    private var downloadServiceBound = false
     
-    private val serviceConnection = object : ServiceConnection {
+    private val aiServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as AIControlService.LocalBinder
             aiControlService = binder.getService()
-            serviceBound = true
+            aiServiceBound = true
         }
         
         override fun onServiceDisconnected(name: ComponentName?) {
             aiControlService = null
-            serviceBound = false
+            aiServiceBound = false
+        }
+    }
+    
+    private val downloadServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as ModelDownloadService.LocalBinder
+            downloadService = binder.getService()
+            downloadServiceBound = true
+        }
+        
+        override fun onServiceDisconnected(name: ComponentName?) {
+            downloadService = null
+            downloadServiceBound = false
         }
     }
     
@@ -65,13 +81,19 @@ class MainActivity : ComponentActivity() {
         preferencesManager = PreferencesManager(this)
         modelManager = LocalModelManager(this)
         
-        val intent = Intent(this, AIControlService::class.java)
+        // Iniciar AI Control Service
+        val aiIntent = Intent(this, AIControlService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
+            startForegroundService(aiIntent)
         } else {
-            startService(intent)
+            startService(aiIntent)
         }
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        bindService(aiIntent, aiServiceConnection, Context.BIND_AUTO_CREATE)
+        
+        // Iniciar Model Download Service
+        ModelDownloadService.start(this)
+        val downloadIntent = Intent(this, ModelDownloadService::class.java)
+        bindService(downloadIntent, downloadServiceConnection, Context.BIND_AUTO_CREATE)
         
         setContent {
             AIONTheme {
@@ -79,6 +101,7 @@ class MainActivity : ComponentActivity() {
                     preferencesManager = preferencesManager,
                     modelManager = modelManager,
                     getService = { aiControlService },
+                    getDownloadService = { downloadService },
                     openAccessibilitySettings = { openAccessibilitySettings() }
                 )
             }
@@ -87,9 +110,13 @@ class MainActivity : ComponentActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
-        if (serviceBound) {
-            unbindService(serviceConnection)
-            serviceBound = false
+        if (aiServiceBound) {
+            unbindService(aiServiceConnection)
+            aiServiceBound = false
+        }
+        if (downloadServiceBound) {
+            unbindService(downloadServiceConnection)
+            downloadServiceBound = false
         }
     }
     
@@ -105,6 +132,7 @@ fun MainScreen(
     preferencesManager: PreferencesManager,
     modelManager: LocalModelManager,
     getService: () -> AIControlService?,
+    getDownloadService: () -> ModelDownloadService?,
     openAccessibilitySettings: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
@@ -170,7 +198,8 @@ fun MainScreen(
                 1 -> ModelsTab(
                     modelManager = modelManager,
                     preferencesManager = preferencesManager,
-                    selectedLocalModel = selectedLocalModel
+                    selectedLocalModel = selectedLocalModel,
+                    getDownloadService = getDownloadService
                 )
                 2 -> SettingsTab(
                     context = context,
@@ -327,13 +356,16 @@ fun MainTab(
 fun ModelsTab(
     modelManager: LocalModelManager,
     preferencesManager: PreferencesManager,
-    selectedLocalModel: String
+    selectedLocalModel: String,
+    getDownloadService: () -> ModelDownloadService?
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var downloadingModel by remember { mutableStateOf<String?>(null) }
-    var downloadProgress by remember { mutableStateOf(0) }
-    var downloadStage by remember { mutableStateOf("") }
     val totalSize = remember { modelManager.getTotalModelsSize() }
+    
+    val downloadService = getDownloadService()
+    val downloadState by (downloadService?.downloadState?.collectAsState() ?: remember { 
+        mutableStateOf(com.aion.aicontroller.service.DownloadState())
+    })
     
     LazyColumn(
         modifier = Modifier
@@ -376,16 +408,22 @@ fun ModelsTab(
         items(AVAILABLE_LOCAL_MODELS) { model ->
             val isDownloaded = modelManager.isModelDownloaded(model)
             val isSelected = model.id == selectedLocalModel
-            val isDownloading = downloadingModel == model.id
+            val isDownloading = downloadState.isDownloading && downloadState.modelId == model.id
             
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = if (isSelected) 
+                    containerColor = if (isSelected && isDownloaded) 
                         MaterialTheme.colorScheme.primaryContainer 
                     else 
                         MaterialTheme.colorScheme.surface
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                border = if (isSelected && isDownloaded) {
+                    androidx.compose.foundation.BorderStroke(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary
+                    )
+                } else null
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -438,20 +476,40 @@ fun ModelsTab(
                     if (isDownloading) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                downloadStage,
+                                downloadState.stage,
                                 fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
                             )
                             LinearProgressIndicator(
-                                progress = { downloadProgress / 100f },
+                                progress = { downloadState.progress / 100f },
                                 modifier = Modifier.fillMaxWidth(),
                             )
-                            Text(
-                                "$downloadProgress%",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    "${downloadState.progress}%",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                                Text(
+                                    "Download em background ativo",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
+                    }
+                    
+                    if (downloadState.error != null && downloadState.modelId == model.id) {
+                        Text(
+                            "Erro: ${downloadState.error}",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                     
                     Row(
@@ -486,38 +544,14 @@ fun ModelsTab(
                         } else {
                             Button(
                                 onClick = {
-                                    downloadingModel = model.id
-                                    downloadStage = "Baixando modelo..."
-                                    
-                                    coroutineScope.launch {
-                                        try {
-                                            modelManager.downloadModel(model).collect { progress ->
-                                                downloadProgress = progress.percentage
-                                            }
-                                            
-                                            downloadStage = "Baixando mmproj..."
-                                            downloadProgress = 0
-                                            
-                                            modelManager.downloadMMProj(model).collect { progress ->
-                                                downloadProgress = progress.percentage
-                                            }
-                                            
-                                            downloadingModel = null
-                                            downloadStage = ""
-                                            downloadProgress = 0
-                                            
-                                        } catch (e: Exception) {
-                                            downloadingModel = null
-                                            downloadStage = "Erro: ${e.message}"
-                                        }
-                                    }
+                                    downloadService?.downloadModel(model)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                enabled = !isDownloading
+                                enabled = !downloadState.isDownloading
                             ) {
                                 Icon(Icons.Default.CloudDownload, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Baixar Modelo")
+                                Text(if (isDownloading) "Baixando..." else "Baixar Modelo")
                             }
                         }
                     }
