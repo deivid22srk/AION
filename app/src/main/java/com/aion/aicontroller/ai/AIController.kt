@@ -103,8 +103,8 @@ LEMBRE-SE: Responda APENAS com o JSON, sem texto adicional antes ou depois."""
             val request = ChatRequest(
                 model = modelId,
                 messages = messages,
-                temperature = 0.5,
-                maxTokens = 1000
+                temperature = 0.7,
+                maxTokens = 4000
             )
             
             Log.d(TAG, "Enviando requisição para OpenRouter...")
@@ -118,7 +118,8 @@ LEMBRE-SE: Responda APENAS com o JSON, sem texto adicional antes ou depois."""
                 val responseBody = response.body()
                 val content = responseBody?.choices?.firstOrNull()?.message?.content
                 
-                Log.d(TAG, "Resposta da IA: $content")
+                Log.d(TAG, "Resposta da IA recebida")
+                Log.d(TAG, "Conteúdo: $content")
                 
                 if (content != null) {
                     return parseAIResponse(content)
@@ -138,22 +139,28 @@ LEMBRE-SE: Responda APENAS com o JSON, sem texto adicional antes ou depois."""
     
     private fun parseAIResponse(response: String): AIAction? {
         try {
+            Log.d(TAG, "Fazendo parse da resposta...")
             val cleanedResponse = response.trim()
                 .removePrefix("```json")
                 .removePrefix("```")
                 .removeSuffix("```")
                 .trim()
             
+            Log.d(TAG, "Resposta limpa: $cleanedResponse")
+            
             val jsonResponse = gson.fromJson(cleanedResponse, AIResponse::class.java)
+            
+            Log.d(TAG, "A\u00e7\u00e3o parseada: ${jsonResponse.action}")
+            Log.d(TAG, "Reasoning: ${jsonResponse.reasoning}")
             
             val actionType = try {
                 ActionType.valueOf(jsonResponse.action.uppercase())
             } catch (e: IllegalArgumentException) {
-                Log.e(TAG, "Tipo de ação inválido: ${jsonResponse.action}")
+                Log.e(TAG, "Tipo de a\u00e7\u00e3o inv\u00e1lido: ${jsonResponse.action}")
                 return null
             }
             
-            return AIAction(
+            val action = AIAction(
                 type = actionType,
                 target = jsonResponse.target,
                 x = jsonResponse.x,
@@ -163,11 +170,15 @@ LEMBRE-SE: Responda APENAS com o JSON, sem texto adicional antes ou depois."""
                 amount = jsonResponse.amount
             )
             
+            Log.d(TAG, "A\u00e7\u00e3o criada com sucesso: $action")
+            return action
+            
         } catch (e: JsonSyntaxException) {
             Log.e(TAG, "Erro ao fazer parse da resposta JSON: ${e.message}")
             Log.e(TAG, "Resposta recebida: $response")
         } catch (e: Exception) {
             Log.e(TAG, "Erro inesperado ao processar resposta: ${e.message}", e)
+            Log.e(TAG, "Resposta completa: $response")
         }
         
         return null

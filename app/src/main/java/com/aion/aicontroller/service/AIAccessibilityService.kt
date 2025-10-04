@@ -176,6 +176,7 @@ class AIAccessibilityService : AccessibilityService() {
     }
     
     private fun performClick(x: Int, y: Int, callback: (Boolean) -> Unit) {
+        Log.d(TAG, "Executando click em ($x, $y)")
         val path = Path()
         path.moveTo(x.toFloat(), y.toFloat())
         
@@ -216,6 +217,7 @@ class AIAccessibilityService : AccessibilityService() {
     }
     
     private fun performTypeText(text: String, callback: (Boolean) -> Unit) {
+        Log.d(TAG, "Digitando texto: $text")
         try {
             val focusedNode = rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
             
@@ -236,6 +238,7 @@ class AIAccessibilityService : AccessibilityService() {
     }
     
     private fun performScroll(direction: String, amount: Int, callback: (Boolean) -> Unit) {
+        Log.d(TAG, "Executando scroll: direção=$direction, amount=$amount")
         val startX = screenWidth / 2f
         val startY = screenHeight / 2f
         
@@ -251,6 +254,7 @@ class AIAccessibilityService : AccessibilityService() {
     }
     
     private fun performSwipe(direction: String, callback: (Boolean) -> Unit) {
+        Log.d(TAG, "Executando swipe: direção=$direction")
         val startX = screenWidth / 2f
         val startY = screenHeight / 2f
         
@@ -295,38 +299,24 @@ class AIAccessibilityService : AccessibilityService() {
     
     private fun openApp(appName: String, callback: (Boolean) -> Unit) {
         try {
-            performGlobalAction(GLOBAL_ACTION_HOME)
+            Log.d(TAG, "Tentando abrir app: $appName")
+            val packageName = getPackageNameForApp(appName)
+            Log.d(TAG, "Package name: $packageName")
             
-            handler.postDelayed({
-                performGlobalAction(GLOBAL_ACTION_RECENTS)
-                
-                handler.postDelayed({
-                    val rootNode = rootInActiveWindow
-                    if (rootNode != null) {
-                        val appNode = findNodeByText(rootNode, appName)
-                        if (appNode != null) {
-                            appNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                            appNode.recycle()
-                            callback(true)
-                            return@postDelayed
-                        }
-                        rootNode.recycle()
-                    }
-                    
-                    val launchIntent = packageManager.getLaunchIntentForPackage(getPackageNameForApp(appName))
-                    if (launchIntent != null) {
-                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        startActivity(launchIntent)
-                        callback(true)
-                    } else {
-                        Log.e(TAG, "Could not find app: $appName")
-                        callback(false)
-                    }
-                }, 500)
-            }, 300)
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+            if (launchIntent != null) {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                startActivity(launchIntent)
+                Log.d(TAG, "App $appName aberto com sucesso")
+                callback(true)
+            } else {
+                Log.e(TAG, "N\u00e3o foi poss\u00edvel encontrar o app: $appName (package: $packageName)")
+                callback(false)
+            }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error opening app: ${e.message}", e)
+            Log.e(TAG, "Erro ao abrir app: ${e.message}", e)
             callback(false)
         }
     }
