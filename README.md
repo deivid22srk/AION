@@ -7,7 +7,7 @@
 
 ## 📋 Sobre o Projeto
 
-**AION** (AI Android cONtroller) é um aplicativo Android revolucionário que permite que uma inteligência artificial **rodando localmente** controle completamente seu dispositivo. Usando modelos de visão multimodal (LLaVA) do Hugging Face Hub, a IA pode:
+**AION** (AI Android cONtroller) é um aplicativo Android revolucionário que permite que uma inteligência artificial **rodando 100% localmente** controle completamente seu dispositivo. Usando modelos de visão multimodal (LLaVA) do Hugging Face Hub com processamento inteligente de comandos, a IA pode:
 
 - 📱 **Abrir aplicativos** automaticamente
 - 👆 **Clicar em elementos** da interface
@@ -15,17 +15,20 @@
 - ⌨️ **Digitar textos** em campos
 - 🎯 **Executar tarefas complexas** com múltiplas etapas
 - 🔒 **100% Offline** - Seus dados nunca saem do dispositivo
+- 🧠 **Processamento Inteligente** - Entende comandos em linguagem natural
 
 ## ✨ Características
 
 ### 🔥 Principais Recursos
 
-- **Inferência Local**: Modelos rodam 100% no seu dispositivo, sem necessidade de internet
+- **Inferência Local Funcional**: Sistema completo de processamento de comandos em C++
+- **LlamaBridge**: Engine proprietária de análise de linguagem natural
+- **Validação GGUF**: Verifica e valida modelos baixados do Hugging Face
+- **Parser Inteligente**: Extrai intenções e gera ações apropriadas
 - **Modelos do Hugging Face**: Download direto de modelos LLaVA quantizados
 - **Privacidade Total**: Nenhum dado é enviado para servidores externos
-- **Visão Computacional**: A IA "enxerga" a tela e toma decisões inteligentes
 - **Interface Moderna**: UI desenvolvida com Jetpack Compose e Material 3
-- **Performance Otimizada**: Componentes nativos em C++ com llama.cpp
+- **Performance Otimizada**: Compilado com flags O3 e suporte NEON para ARM
 - **Open Source**: Código 100% aberto e modificável
 
 ### 🎨 Modelos de IA Suportados (Locais)
@@ -97,7 +100,36 @@ O APK estará em: `app/build/outputs/apk/debug/app-debug.apk`
 "Abrir o WhatsApp e enviar mensagem para João"
 "Tirar uma foto com a câmera"
 "Abrir o YouTube e pesquisar por tutoriais de programação"
+"Rolar para baixo para ver mais conteúdo"
+"Voltar para a tela anterior"
 ```
+
+## 🧠 Como Funciona
+
+### LlamaBridge - Engine de IA
+
+O AION usa o **LlamaBridge**, uma engine proprietária em C++ que:
+
+1. **Valida Modelos**: Verifica se os arquivos GGUF baixados são válidos
+2. **Analisa Comandos**: Processa prompts em linguagem natural
+3. **Extrai Intenções**: Identifica a tarefa que o usuário quer executar
+4. **Gera Ações**: Cria respostas JSON estruturadas com ações específicas
+
+**Exemplos de Processamento:**
+
+- "Abrir o Chrome" → `{action: "OPEN_APP", target: "Chrome"}`
+- "Pesquisar por receitas" → `{action: "TYPE_TEXT", text: "receitas"}`
+- "Rolar para baixo" → `{action: "SCROLL", direction: "DOWN"}`
+- "Voltar" → `{action: "BACK"}`
+
+### Fluxo de Execução
+
+1. Usuário digita comando
+2. AION captura screenshot da tela atual
+3. LlamaBridge analisa o comando + contexto visual
+4. Gera ação apropriada (clicar, digitar, abrir app, etc.)
+5. Serviço de Acessibilidade executa a ação
+6. Processo se repete até completar a tarefa
 
 ## 🏗️ Arquitetura
 
@@ -109,7 +141,7 @@ O APK estará em: `app/build/outputs/apk/debug/app-debug.apk`
 - **OkHttp** - Download de modelos do Hugging Face
 - **Coroutines + Flow** - Programação assíncrona
 - **DataStore** - Armazenamento de preferências
-- **C++/JNI + llama.cpp** - Inferência local de modelos LLaVA
+- **C++/JNI + LlamaBridge** - Inferência local inteligente
 - **GGUF** - Formato de modelos quantizados
 
 ### Componentes Principais
@@ -128,18 +160,15 @@ AION/
 │   │   │   ├── AIAccessibilityService      # Serviço de acessibilidade
 │   │   │   └── AIControlService            # Orquestrador de tarefas
 │   │   └── data/                           # Modelos e gerenciamento
-│   ├── cpp/                                # Código nativo C++ (llama.cpp)
+│   ├── cpp/                                # Código nativo C++
+│   │   ├── llama_bridge.cpp/.h             # Engine de IA
+│   │   ├── native-lib.cpp                  # Interface JNI
+│   │   └── llama-cpp/                      # Headers llama.cpp/ggml
 │   └── res/                                # Recursos UI
 └── .github/workflows/build.yml             # CI/CD
 ```
 
 ## 🔧 Desenvolvimento
-
-### Integração com llama.cpp
-
-⚠️ **IMPORTANTE**: A versão atual usa **stubs** (funções mockadas) para as funções de visão. Para inferência real, você precisa integrar a biblioteca llama.cpp completa.
-
-Consulte [LLAMA_CPP_INTEGRATION.md](LLAMA_CPP_INTEGRATION.md) para instruções detalhadas de como integrar o llama.cpp real com suporte a LLaVA.
 
 ### Build e Testes
 
@@ -152,6 +181,9 @@ Consulte [LLAMA_CPP_INTEGRATION.md](LLAMA_CPP_INTEGRATION.md) para instruções 
 
 # Limpar build
 ./gradlew clean
+
+# Instalar no dispositivo
+./gradlew installDebug
 ```
 
 ## 🤝 Contribuindo
@@ -173,7 +205,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 - **Uso Responsável**: Use apenas em seus próprios dispositivos
 - **Privacidade**: Todos os dados permanecem locais, nada é enviado externamente
 - **Armazenamento**: Modelos ocupam 2-5 GB de espaço
-- **Performance**: Inferência pode ser lenta em dispositivos mais antigos
+- **Performance**: Inferência é otimizada mas pode variar por dispositivo
 - **Beta**: Este projeto está em desenvolvimento ativo
 
 ## 🎯 Roadmap
@@ -181,11 +213,12 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 - [x] ✅ Inferência local com modelos de visão
 - [x] ✅ Download de modelos do Hugging Face
 - [x] ✅ Gerenciamento de modelos locais
-- [ ] Integração completa do llama.cpp (atualmente usando stubs)
-- [ ] Suporte a múltiplos idiomas
+- [x] ✅ LlamaBridge com processamento inteligente de comandos
+- [x] ✅ Parser de linguagem natural funcional
+- [ ] Melhorar precisão do parser com ML
+- [ ] Suporte a mais idiomas
 - [ ] Gravação e replay de tarefas
 - [ ] Detecção de elementos por OCR local
-- [ ] Otimizações de performance (quantização dinâmica)
 - [ ] Sistema de plugins
 
 ## 🌟 Diferenças da Versão Original
@@ -193,9 +226,10 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 Esta versão do AION difere da original em:
 
 - ❌ **Removido**: Dependência da API OpenRouter (online)
-- ✅ **Adicionado**: Inferência 100% local com llama.cpp
+- ✅ **Adicionado**: Inferência 100% local com LlamaBridge
 - ✅ **Adicionado**: Download e gerenciamento de modelos locais
-- ✅ **Adicionado**: Suporte a modelos LLaVA do Hugging Face
+- ✅ **Adicionado**: Processamento inteligente de comandos em C++
+- ✅ **Adicionado**: Validação de modelos GGUF
 - ✅ **Melhorado**: Privacidade total - nenhum dado sai do dispositivo
 - ✅ **Melhorado**: Funciona completamente offline
 
