@@ -2,26 +2,20 @@
 #include <string>
 #include <android/log.h>
 #include "image_processor.h"
+#include "llama_bridge.h"
 #include <memory>
-#include <vector>
 
 #define LOG_TAG "AION-Native"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-struct VisionModelContext {
-    std::string modelPath;
-    std::string mmProjPath;
-    bool isLoaded = false;
-};
-
-static std::unique_ptr<VisionModelContext> g_modelContext = nullptr;
+static std::unique_ptr<LlamaBridge> g_llamaBridge = nullptr;
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aion_aicontroller_NativeLib_getVersion(
         JNIEnv* env,
         jobject /* this */) {
-    std::string version = "AION Native Library v1.0";
+    std::string version = "AION Native Library v2.0 - LlamaBridge Edition";
     LOGI("Native library loaded: %s", version.c_str());
     return env->NewStringUTF(version.c_str());
 }
@@ -104,20 +98,29 @@ Java_com_aion_aicontroller_NativeLib_loadVisionModel(
     const char* modelPathStr = env->GetStringUTFChars(modelPath, nullptr);
     const char* mmProjPathStr = env->GetStringUTFChars(mmProjPath, nullptr);
     
-    LOGI("Loading vision model: %s", modelPathStr);
-    LOGI("Loading mmproj: %s", mmProjPathStr);
+    LOGI("Loading vision model via LlamaBridge");
+    LOGI("Model path: %s", modelPathStr);
+    LOGI("MMProj path: %s", mmProjPathStr);
     
-    g_modelContext = std::make_unique<VisionModelContext>();
-    g_modelContext->modelPath = std::string(modelPathStr);
-    g_modelContext->mmProjPath = std::string(mmProjPathStr);
+    if (g_llamaBridge == nullptr) {
+        g_llamaBridge = std::make_unique<LlamaBridge>();
+    }
+    
+    bool success = g_llamaBridge->loadModel(
+        std::string(modelPathStr),
+        std::string(mmProjPathStr)
+    );
     
     env->ReleaseStringUTFChars(modelPath, modelPathStr);
     env->ReleaseStringUTFChars(mmProjPath, mmProjPathStr);
     
-    g_modelContext->isLoaded = true;
-    LOGI("Vision model loaded successfully (stub implementation)");
-    
-    return JNI_TRUE;
+    if (success) {
+        LOGI("Vision model loaded successfully");
+        return JNI_TRUE;
+    } else {
+        LOGE("Failed to load vision model");
+        return JNI_FALSE;
+    }
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -125,12 +128,10 @@ Java_com_aion_aicontroller_NativeLib_unloadVisionModel(
         JNIEnv* env,
         jobject /* this */) {
     
-    if (g_modelContext && g_modelContext->isLoaded) {
-        LOGI("Unloading vision model");
-        
-        g_modelContext->isLoaded = false;
-        g_modelContext.reset();
-        
+    if (g_llamaBridge != nullptr) {
+        LOGI("Unloading vision model via LlamaBridge");
+        g_llamaBridge->unloadModel();
+        g_llamaBridge.reset();
         LOGI("Vision model unloaded");
     }
 }
@@ -144,7 +145,7 @@ Java_com_aion_aicontroller_NativeLib_generateVisionResponse(
         jfloat temperature,
         jint maxTokens) {
     
-    if (!g_modelContext || !g_modelContext->isLoaded) {
+    if (g_llamaBridge == nullptr || !g_llamaBridge->isLoaded()) {
         LOGE("Vision model not loaded");
         return nullptr;
     }
@@ -152,21 +153,27 @@ Java_com_aion_aicontroller_NativeLib_generateVisionResponse(
     const char* imagePathStr = env->GetStringUTFChars(imagePath, nullptr);
     const char* promptStr = env->GetStringUTFChars(prompt, nullptr);
     
-    LOGI("Generating response for image: %s", imagePathStr);
-    LOGI("Prompt length: %zu", strlen(promptStr));
+    LOGI("Generating vision response via LlamaBridge");
+    LOGI("Image: %s", imagePathStr);
+    LOGI("Prompt length: %zu chars", strlen(promptStr));
     LOGI("Temperature: %.2f, MaxTokens: %d", temperature, maxTokens);
     
-    std::string response = R"({
-  "action": "CLICK",
-  "x": 500,
-  "y": 800,
-  "reasoning": "Analisando a tela e clicando no elemento central identificado"
-})";
+    std::string response = g_llamaBridge->generateResponse(
+        std::string(imagePathStr),
+        std::string(promptStr),
+        temperature,
+        maxTokens
+    );
     
     env->ReleaseStringUTFChars(imagePath, imagePathStr);
     env->ReleaseStringUTFChars(prompt, promptStr);
     
-    LOGI("Response generated (stub implementation)");
+    if (response.empty()) {
+        LOGE("Empty response from LlamaBridge");
+        return nullptr;
+    }
+    
+    LOGI("Response generated successfully");
     
     return env->NewStringUTF(response.c_str());
 }
