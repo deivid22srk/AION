@@ -73,7 +73,7 @@ class AIAccessibilityService : AccessibilityService() {
     fun takeScreenshot(callback: (Bitmap?) -> Unit) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             takeScreenshot(
-                TAKE_SCREENSHOT_FULLSCREEN,
+                AccessibilityService.SCREENSHOT_MODE_FULL_WINDOW,
                 { runnable -> handler.post(runnable) },
                 object : TakeScreenshotCallback {
                     override fun onSuccess(screenshot: ScreenshotResult) {
