@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.DisplayMetrics
 import android.util.Log
+import android.view.Display
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -73,7 +74,7 @@ class AIAccessibilityService : AccessibilityService() {
     fun takeScreenshot(callback: (Bitmap?) -> Unit) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             takeScreenshot(
-                AccessibilityService.SCREENSHOT_MODE_FULL_WINDOW,
+                Display.DEFAULT_DISPLAY,
                 { runnable -> handler.post(runnable) },
                 object : TakeScreenshotCallback {
                     override fun onSuccess(screenshot: ScreenshotResult) {
