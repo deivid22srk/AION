@@ -29,6 +29,7 @@ class AIControlService : Service() {
     
     private var aiController: AIController? = null
     private var isRunning = false
+    private var floatingLogOverlay: FloatingLogOverlay? = null
     
     private val _taskStatus = MutableStateFlow(TaskStatus(Status.IDLE))
     val taskStatus: StateFlow<TaskStatus> = _taskStatus
@@ -56,6 +57,7 @@ class AIControlService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        floatingLogOverlay = FloatingLogOverlay(this)
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -180,6 +182,21 @@ class AIControlService : Service() {
     
     fun clearLogs() {
         _logs.value = emptyList()
+        floatingLogOverlay?.clearLogs()
+    }
+    
+    fun setFloatingLogEnabled(enabled: Boolean) {
+        if (enabled) {
+            floatingLogOverlay?.show()
+            addLog("Log flutuante ativado")
+        } else {
+            floatingLogOverlay?.hide()
+            addLog("Log flutuante desativado")
+        }
+    }
+    
+    fun isFloatingLogVisible(): Boolean {
+        return floatingLogOverlay?.isVisible() ?: false
     }
     
     private fun addLog(message: String) {
@@ -188,6 +205,7 @@ class AIControlService : Service() {
         val logMessage = "[$timestamp] $message"
         Log.d(TAG, message)
         _logs.value = _logs.value + logMessage
+        floatingLogOverlay?.addLog(logMessage)
     }
     
     private fun createNotificationChannel() {

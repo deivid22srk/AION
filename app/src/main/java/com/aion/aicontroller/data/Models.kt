@@ -33,9 +33,39 @@ val AVAILABLE_FREE_MODELS = listOf(
         supportsVision = true
     ),
     FreeModel(
+        id = "moonshotai/kimi-vl-a3b-thinking:free",
+        name = "Kimi VL A3B Thinking",
+        description = "Modelo com visão e raciocínio avançado",
+        supportsVision = true
+    ),
+    FreeModel(
+        id = "deepseek/deepseek-r1:free",
+        name = "DeepSeek R1",
+        description = "Modelo de raciocínio avançado (671B total, 37B ativo)",
+        supportsVision = false
+    ),
+    FreeModel(
+        id = "tngtech/deepseek-r1t2-chimera:free",
+        name = "DeepSeek R1T2 Chimera",
+        description = "Modelo híbrido otimizado, 20% mais rápido (671B)",
+        supportsVision = false
+    ),
+    FreeModel(
+        id = "deepseek/deepseek-r1-distill-qwen-32b:free",
+        name = "DeepSeek R1 Distill Qwen 32B",
+        description = "Versão destilada rápida e eficiente (32B)",
+        supportsVision = false
+    ),
+    FreeModel(
         id = "deepseek/deepseek-chat-v3.1:free",
-        name = "DeepSeek V3.1",
-        description = "Modelo de raciocínio híbrido (671B total, 37B ativo)",
+        name = "DeepSeek Chat V3.1",
+        description = "Modelo conversacional equilibrado (671B total, 37B ativo)",
+        supportsVision = false
+    ),
+    FreeModel(
+        id = "mistralai/mistral-small-3.1-24b-instruct:free",
+        name = "Mistral Small 3.1 24B",
+        description = "Modelo Mistral eficiente para instruções (24B)",
         supportsVision = false
     ),
     FreeModel(

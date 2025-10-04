@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -91,6 +92,16 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
         startActivity(intent)
     }
+    
+    private fun openOverlaySettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+            startActivity(intent)
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,9 +166,12 @@ fun MainScreen(
                     logs = logs
                 )
                 1 -> SettingsTab(
+                    context = this@MainActivity,
                     preferencesManager = preferencesManager,
                     apiKey = apiKey,
-                    selectedModel = selectedModel
+                    selectedModel = selectedModel,
+                    getService = getService,
+                    openOverlaySettings = { openOverlaySettings() }
                 )
             }
         }
@@ -435,13 +449,21 @@ fun LogCard(
 
 @Composable
 fun SettingsTab(
+    context: Context,
     preferencesManager: PreferencesManager,
     apiKey: String,
-    selectedModel: String
+    selectedModel: String,
+    getService: () -> AIControlService?,
+    openOverlaySettings: () -> Unit
 ) {
     var apiKeyInput by remember(apiKey) { mutableStateOf(apiKey) }
     var showSaveMessage by remember { mutableStateOf(false) }
+    val floatingLogEnabled by preferencesManager.floatingLogEnabled.collectAsState(initial = false)
     val coroutineScope = rememberCoroutineScope()
+    
+    LaunchedEffect(floatingLogEnabled) {
+        getService()?.setFloatingLogEnabled(floatingLogEnabled)
+    }
     
     LazyColumn(
         modifier = Modifier
@@ -557,6 +579,69 @@ fun SettingsTab(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+        
+        item {
+            Card {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        "Log Flutuante",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Text(
+                        "Exibe logs sobre todos os aplicativos (invisível em screenshots)",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Ativar log flutuante")
+                        Switch(
+                            checked = floatingLogEnabled,
+                            onCheckedChange = { enabled ->
+                                if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    if (!Settings.canDrawOverlays(context)) {
+                                        openOverlaySettings()
+                                    } else {
+                                        coroutineScope.launch {
+                                            preferencesManager.saveFloatingLogEnabled(enabled)
+                                        }
+                                    }
+                                } else {
+                                    coroutineScope.launch {
+                                        preferencesManager.saveFloatingLogEnabled(enabled)
+                                    }
+                                }
+                            }
+                        )
+                    }
+                    
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && 
+                        !Settings.canDrawOverlays(context) && 
+                        floatingLogEnabled) {
+                        Text(
+                            "⚠ Permissão de sobreposição necessária",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        FilledTonalButton(
+                            onClick = openOverlaySettings,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Conceder Permissão")
                         }
                     }
                 }
