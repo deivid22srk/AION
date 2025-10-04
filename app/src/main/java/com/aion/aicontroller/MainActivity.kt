@@ -29,9 +29,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aion.aicontroller.data.AVAILABLE_FREE_MODELS
+import com.aion.aicontroller.data.AVAILABLE_LOCAL_MODELS
 import com.aion.aicontroller.data.PreferencesManager
 import com.aion.aicontroller.data.Status
+import com.aion.aicontroller.data.LocalVisionModel
+import com.aion.aicontroller.local.LocalModelManager
 import com.aion.aicontroller.service.AIAccessibilityService
 import com.aion.aicontroller.service.AIControlService
 import com.aion.aicontroller.ui.theme.AIONTheme
@@ -40,6 +42,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     
     private lateinit var preferencesManager: PreferencesManager
+    private lateinit var modelManager: LocalModelManager
     private var aiControlService: AIControlService? = null
     private var serviceBound = false
     
@@ -60,6 +63,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         preferencesManager = PreferencesManager(this)
+        modelManager = LocalModelManager(this)
         
         val intent = Intent(this, AIControlService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -73,6 +77,7 @@ class MainActivity : ComponentActivity() {
             AIONTheme {
                 MainScreen(
                     preferencesManager = preferencesManager,
+                    modelManager = modelManager,
                     getService = { aiControlService },
                     openAccessibilitySettings = { openAccessibilitySettings() }
                 )
@@ -98,12 +103,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(
     preferencesManager: PreferencesManager,
+    modelManager: LocalModelManager,
     getService: () -> AIControlService?,
     openAccessibilitySettings: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    val apiKey by preferencesManager.apiKey.collectAsState(initial = "")
-    val selectedModel by preferencesManager.selectedModel.collectAsState(initial = PreferencesManager.DEFAULT_MODEL)
+    val selectedLocalModel by preferencesManager.selectedLocalModel.collectAsState(initial = PreferencesManager.DEFAULT_LOCAL_MODEL)
     val context = androidx.compose.ui.platform.LocalContext.current
     
     val service = getService()
@@ -117,7 +122,7 @@ fun MainScreen(
                     Column {
                         Text("AION", fontWeight = FontWeight.Bold)
                         Text(
-                            "AI Android Controller",
+                            "AI Android Controller - Local",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
@@ -137,10 +142,16 @@ fun MainScreen(
                     onClick = { selectedTab = 0 }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                    label = { Text("Configurações") },
+                    icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
+                    label = { Text("Modelos") },
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    label = { Text("Configurações") },
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 }
                 )
             }
         }
@@ -149,18 +160,21 @@ fun MainScreen(
             when (selectedTab) {
                 0 -> MainTab(
                     preferencesManager = preferencesManager,
-                    apiKey = apiKey,
-                    selectedModel = selectedModel,
+                    modelManager = modelManager,
+                    selectedLocalModel = selectedLocalModel,
                     getService = getService,
                     openAccessibilitySettings = openAccessibilitySettings,
                     taskStatus = taskStatus,
                     logs = logs
                 )
-                1 -> SettingsTab(
+                1 -> ModelsTab(
+                    modelManager = modelManager,
+                    preferencesManager = preferencesManager,
+                    selectedLocalModel = selectedLocalModel
+                )
+                2 -> SettingsTab(
                     context = context,
                     preferencesManager = preferencesManager,
-                    apiKey = apiKey,
-                    selectedModel = selectedModel,
                     getService = getService,
                     openOverlaySettings = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -180,8 +194,8 @@ fun MainScreen(
 @Composable
 fun MainTab(
     preferencesManager: PreferencesManager,
-    apiKey: String,
-    selectedModel: String,
+    modelManager: LocalModelManager,
+    selectedLocalModel: String,
     getService: () -> AIControlService?,
     openAccessibilitySettings: () -> Unit,
     taskStatus: com.aion.aicontroller.data.TaskStatus,
@@ -191,9 +205,15 @@ fun MainTab(
     var taskInput by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     
-    LaunchedEffect(apiKey, selectedModel) {
-        if (apiKey.isNotEmpty()) {
-            getService()?.setupAI(apiKey, selectedModel)
+    val selectedModel = AVAILABLE_LOCAL_MODELS.find { it.id == selectedLocalModel }
+    val isModelDownloaded = selectedModel?.let { modelManager.isModelDownloaded(it) } ?: false
+    val isModelLoaded = getService()?.isModelLoaded() ?: false
+    
+    LaunchedEffect(selectedLocalModel, isModelDownloaded) {
+        if (isModelDownloaded && selectedModel != null && !isModelLoaded) {
+            val modelFile = modelManager.getModelFile(selectedModel)
+            val mmProjFile = modelManager.getMMProjFile(selectedModel)
+            getService()?.setupLocalAI(modelFile.absolutePath, mmProjFile.absolutePath)
         }
     }
     
@@ -208,7 +228,7 @@ fun MainTab(
             onOpenSettings = openAccessibilitySettings
         )
         
-        if (apiKey.isEmpty()) {
+        if (!isModelDownloaded) {
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer
@@ -220,7 +240,22 @@ fun MainTab(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.Warning, contentDescription = null)
-                    Text("Configure sua chave API nas configurações")
+                    Text("Baixe um modelo na aba 'Modelos' para começar")
+                }
+            }
+        } else if (!isModelLoaded) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    Text("Carregando modelo...")
                 }
             }
         }
@@ -253,12 +288,12 @@ fun MainTab(
                 ) {
                     Button(
                         onClick = {
-                            if (taskInput.isNotEmpty() && apiKey.isNotEmpty() && isAccessibilityEnabled) {
+                            if (taskInput.isNotEmpty() && isModelDownloaded && isModelLoaded && isAccessibilityEnabled) {
                                 getService()?.executeTask(taskInput)
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        enabled = taskInput.isNotEmpty() && apiKey.isNotEmpty() && 
+                        enabled = taskInput.isNotEmpty() && isModelDownloaded && isModelLoaded &&
                                   isAccessibilityEnabled && taskStatus.status != Status.PROCESSING && 
                                   taskStatus.status != Status.EXECUTING
                     ) {
@@ -285,6 +320,210 @@ fun MainTab(
             logs = logs,
             onClearLogs = { getService()?.clearLogs() }
         )
+    }
+}
+
+@Composable
+fun ModelsTab(
+    modelManager: LocalModelManager,
+    preferencesManager: PreferencesManager,
+    selectedLocalModel: String
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var downloadingModel by remember { mutableStateOf<String?>(null) }
+    var downloadProgress by remember { mutableStateOf(0) }
+    var downloadStage by remember { mutableStateOf("") }
+    val totalSize = remember { modelManager.getTotalModelsSize() }
+    
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Storage, contentDescription = null, modifier = Modifier.size(32.dp))
+                        Column {
+                            Text(
+                                "Modelos Locais de Visão",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Espaço usado: ${modelManager.formatFileSize(totalSize)}",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        items(AVAILABLE_LOCAL_MODELS) { model ->
+            val isDownloaded = modelManager.isModelDownloaded(model)
+            val isSelected = model.id == selectedLocalModel
+            val isDownloading = downloadingModel == model.id
+            
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isSelected) 
+                        MaterialTheme.colorScheme.primaryContainer 
+                    else 
+                        MaterialTheme.colorScheme.surface
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                model.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                model.description,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Download,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                                Text(
+                                    model.estimatedSize,
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        
+                        if (isSelected) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    
+                    if (isDownloading) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                downloadStage,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            LinearProgressIndicator(
+                                progress = { downloadProgress / 100f },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Text(
+                                "$downloadProgress%",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (isDownloaded) {
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        preferencesManager.saveSelectedLocalModel(model.id)
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                enabled = !isSelected
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(if (isSelected) "Selecionado" else "Selecionar")
+                            }
+                            
+                            OutlinedButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        modelManager.deleteModel(model)
+                                    }
+                                },
+                                enabled = !isDownloading && !isSelected
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = null)
+                            }
+                        } else {
+                            Button(
+                                onClick = {
+                                    downloadingModel = model.id
+                                    downloadStage = "Baixando modelo..."
+                                    
+                                    coroutineScope.launch {
+                                        try {
+                                            modelManager.downloadModel(model).collect { progress ->
+                                                downloadProgress = progress.percentage
+                                            }
+                                            
+                                            downloadStage = "Baixando mmproj..."
+                                            downloadProgress = 0
+                                            
+                                            modelManager.downloadMMProj(model).collect { progress ->
+                                                downloadProgress = progress.percentage
+                                            }
+                                            
+                                            downloadingModel = null
+                                            downloadStage = ""
+                                            downloadProgress = 0
+                                            
+                                        } catch (e: Exception) {
+                                            downloadingModel = null
+                                            downloadStage = "Erro: ${e.message}"
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !isDownloading
+                            ) {
+                                Icon(Icons.Default.CloudDownload, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Baixar Modelo")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -407,7 +646,7 @@ fun LogCard(
                 }
             }
             
-            Divider()
+            HorizontalDivider()
             
             val listState = rememberLazyListState()
             
@@ -450,13 +689,9 @@ fun LogCard(
 fun SettingsTab(
     context: Context,
     preferencesManager: PreferencesManager,
-    apiKey: String,
-    selectedModel: String,
     getService: () -> AIControlService?,
     openOverlaySettings: () -> Unit
 ) {
-    var apiKeyInput by remember(apiKey) { mutableStateOf(apiKey) }
-    var showSaveMessage by remember { mutableStateOf(false) }
     val floatingLogEnabled by preferencesManager.floatingLogEnabled.collectAsState(initial = false)
     val coroutineScope = rememberCoroutineScope()
     
@@ -470,120 +705,6 @@ fun SettingsTab(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            Card {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        "Chave API OpenRouter",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    Text(
-                        "Obtenha sua chave API gratuita em openrouter.ai",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    
-                    OutlinedTextField(
-                        value = apiKeyInput,
-                        onValueChange = { apiKeyInput = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("sk-or-v1-...") },
-                        singleLine = true
-                    )
-                    
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                preferencesManager.saveApiKey(apiKeyInput)
-                                showSaveMessage = true
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = apiKeyInput.isNotEmpty()
-                    ) {
-                        Icon(Icons.Default.Save, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Salvar Chave API")
-                    }
-                    
-                    if (showSaveMessage) {
-                        LaunchedEffect(Unit) {
-                            kotlinx.coroutines.delay(2000)
-                            showSaveMessage = false
-                        }
-                        Text(
-                            "✓ Chave API salva com sucesso",
-                            color = Color.Green,
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-            }
-        }
-        
-        item {
-            Card {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        "Modelo de IA",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    Text(
-                        "Selecione um modelo gratuito com suporte a visão",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    
-                    AVAILABLE_FREE_MODELS.filter { it.supportsVision }.forEach { model ->
-                        Card(
-                            onClick = {
-                                coroutineScope.launch {
-                                    preferencesManager.saveSelectedModel(model.id)
-                                }
-                            },
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (selectedModel == model.id)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else
-                                    MaterialTheme.colorScheme.surface
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = selectedModel == model.id,
-                                    onClick = null
-                                )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(model.name, fontWeight = FontWeight.Bold)
-                                    Text(
-                                        model.description,
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
         item {
             Card {
                 Column(
@@ -659,11 +780,11 @@ fun SettingsTab(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "AION é um controlador de Android baseado em IA que usa modelos de visão do OpenRouter para executar tarefas automaticamente.",
+                        "AION é um controlador de Android baseado em IA que usa modelos locais de visão do Hugging Face para executar tarefas automaticamente.",
                         fontSize = 12.sp
                     )
                     Text(
-                        "Versão 1.0",
+                        "Versão 2.0 - Local AI",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )

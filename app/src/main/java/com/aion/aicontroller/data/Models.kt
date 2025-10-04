@@ -1,90 +1,60 @@
 package com.aion.aicontroller.data
 
-data class FreeModel(
+data class LocalVisionModel(
     val id: String,
     val name: String,
     val description: String,
-    val supportsVision: Boolean
+    val repoId: String,
+    val modelFilename: String,
+    val mmProjFilename: String,
+    val estimatedSize: String
 )
 
-val AVAILABLE_FREE_MODELS = listOf(
-    FreeModel(
-        id = "google/gemini-2.0-flash-exp:free",
-        name = "Gemini 2.0 Flash Experimental",
-        description = "Modelo Google mais rápido com visão (1.05M contexto) - RECOMENDADO",
-        supportsVision = true
+val AVAILABLE_LOCAL_MODELS = listOf(
+    LocalVisionModel(
+        id = "llava-v1.6-mistral-7b-q4",
+        name = "LLaVA 1.6 Mistral 7B (Q4)",
+        description = "Modelo de visão compacto e rápido - RECOMENDADO (4.37 GB)",
+        repoId = "cjpais/llava-1.6-mistral-7b-gguf",
+        modelFilename = "llava-v1.6-mistral-7b.Q4_K_M.gguf",
+        mmProjFilename = "mmproj-model-f16.gguf",
+        estimatedSize = "4.37 GB"
     ),
-    FreeModel(
-        id = "meta-llama/llama-4-maverick:free",
-        name = "Llama 4 Maverick",
-        description = "Modelo Meta avançado com visão (400B total, 17B ativo)",
-        supportsVision = true
+    LocalVisionModel(
+        id = "llava-v1.6-vicuna-7b-q4",
+        name = "LLaVA 1.6 Vicuna 7B (Q4)",
+        description = "Modelo de visão equilibrado (4.37 GB)",
+        repoId = "cjpais/llava-v1.6-vicuna-7b-gguf",
+        modelFilename = "llava-v1.6-vicuna-7b.Q4_K_M.gguf",
+        mmProjFilename = "mmproj-model-f16.gguf",
+        estimatedSize = "4.37 GB"
     ),
-    FreeModel(
-        id = "meta-llama/llama-4-scout:free",
-        name = "Llama 4 Scout",
-        description = "Llama 4 otimizado (109B total, 10M tokens contexto)",
-        supportsVision = true
+    LocalVisionModel(
+        id = "llava-v1.5-7b-q4",
+        name = "LLaVA 1.5 7B (Q4)",
+        description = "Versão clássica estável (4.08 GB)",
+        repoId = "mys/ggml_llava-v1.5-7b",
+        modelFilename = "ggml-model-q4_k.gguf",
+        mmProjFilename = "mmproj-model-f16.gguf",
+        estimatedSize = "4.08 GB"
     ),
-    FreeModel(
-        id = "qwen/qwen2.5-vl-72b-instruct:free",
-        name = "Qwen 2.5 VL 72B",
-        description = "Modelo multimodal poderoso com visão (72B parâmetros)",
-        supportsVision = true
+    LocalVisionModel(
+        id = "bakllava-1-q4",
+        name = "BakLLaVA 1 7B (Q4)",
+        description = "Especializado em tarefas visuais (4.37 GB)",
+        repoId = "mys/ggml_bakllava-1",
+        modelFilename = "ggml-model-q4_k.gguf",
+        mmProjFilename = "mmproj-model-f16.gguf",
+        estimatedSize = "4.37 GB"
     ),
-    FreeModel(
-        id = "mistralai/mistral-small-3.2-24b-instruct:free",
-        name = "Mistral Small 3.2 24B",
-        description = "Mistral atualizado com visão e melhor precisão (24B)",
-        supportsVision = true
-    ),
-    FreeModel(
-        id = "qwen/qwen2.5-vl-32b-instruct:free",
-        name = "Qwen 2.5 VL 32B",
-        description = "Modelo multimodal equilibrado com visão (32B parâmetros)",
-        supportsVision = true
-    ),
-    FreeModel(
-        id = "google/gemma-3-27b-it:free",
-        name = "Gemma 3 27B",
-        description = "Modelo Google multimodal (27B parâmetros)",
-        supportsVision = true
-    ),
-    FreeModel(
-        id = "deepseek/deepseek-r1:free",
-        name = "DeepSeek R1",
-        description = "Modelo de raciocínio avançado (671B total, 37B ativo)",
-        supportsVision = false
-    ),
-    FreeModel(
-        id = "tngtech/deepseek-r1t2-chimera:free",
-        name = "DeepSeek R1T2 Chimera",
-        description = "Modelo híbrido otimizado, 20% mais rápido (671B)",
-        supportsVision = false
-    ),
-    FreeModel(
-        id = "deepseek/deepseek-r1-distill-qwen-32b:free",
-        name = "DeepSeek R1 Distill Qwen 32B",
-        description = "Versão destilada rápida e eficiente (32B)",
-        supportsVision = false
-    ),
-    FreeModel(
-        id = "deepseek/deepseek-chat-v3.1:free",
-        name = "DeepSeek Chat V3.1",
-        description = "Modelo conversacional equilibrado (671B total, 37B ativo)",
-        supportsVision = false
-    ),
-    FreeModel(
-        id = "mistralai/mistral-small-3.1-24b-instruct:free",
-        name = "Mistral Small 3.1 24B",
-        description = "Modelo Mistral eficiente para instruções (24B)",
-        supportsVision = false
-    ),
-    FreeModel(
-        id = "z-ai/glm-4.5-air:free",
-        name = "GLM 4.5 Air",
-        description = "Modelo leve para agentes (MoE)",
-        supportsVision = false
+    LocalVisionModel(
+        id = "llava-phi-3-mini-q4",
+        name = "LLaVA Phi-3 Mini (Q4)",
+        description = "Modelo ultra compacto da Microsoft (2.5 GB)",
+        repoId = "xtuner/llava-phi-3-mini-gguf",
+        modelFilename = "llava-phi-3-mini-int4.gguf",
+        mmProjFilename = "llava-phi-3-mini-mmproj-f16.gguf",
+        estimatedSize = "2.5 GB"
     )
 )
 

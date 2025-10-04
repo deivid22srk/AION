@@ -2,7 +2,7 @@ package com.aion.aicontroller
 
 import android.graphics.Bitmap
 
-object NativeLib {
+class NativeLib {
     
     init {
         System.loadLibrary("aion_native")
@@ -15,4 +15,15 @@ object NativeLib {
     external fun calculateImageHash(bitmap: Bitmap): Int
     
     external fun reduceImageSize(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Boolean
+    
+    external fun loadVisionModel(modelPath: String, mmProjPath: String): Boolean
+    
+    external fun unloadVisionModel()
+    
+    external fun generateVisionResponse(
+        imagePath: String, 
+        prompt: String, 
+        temperature: Float, 
+        maxTokens: Int
+    ): String?
 }

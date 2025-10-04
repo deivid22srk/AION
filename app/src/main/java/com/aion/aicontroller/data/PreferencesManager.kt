@@ -15,34 +15,23 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class PreferencesManager(private val context: Context) {
     
     companion object {
-        private val API_KEY = stringPreferencesKey("api_key")
-        private val SELECTED_MODEL = stringPreferencesKey("selected_model")
+        private val SELECTED_LOCAL_MODEL = stringPreferencesKey("selected_local_model")
         private val FLOATING_LOG_ENABLED = booleanPreferencesKey("floating_log_enabled")
         
-        const val DEFAULT_MODEL = "google/gemini-2.0-flash-exp:free"
+        const val DEFAULT_LOCAL_MODEL = "llava-v1.6-mistral-7b-q4"
     }
     
-    val apiKey: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[API_KEY] ?: ""
-    }
-    
-    val selectedModel: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[SELECTED_MODEL] ?: DEFAULT_MODEL
+    val selectedLocalModel: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[SELECTED_LOCAL_MODEL] ?: DEFAULT_LOCAL_MODEL
     }
     
     val floatingLogEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[FLOATING_LOG_ENABLED] ?: false
     }
     
-    suspend fun saveApiKey(apiKey: String) {
+    suspend fun saveSelectedLocalModel(modelId: String) {
         context.dataStore.edit { preferences ->
-            preferences[API_KEY] = apiKey
-        }
-    }
-    
-    suspend fun saveSelectedModel(model: String) {
-        context.dataStore.edit { preferences ->
-            preferences[SELECTED_MODEL] = model
+            preferences[SELECTED_LOCAL_MODEL] = modelId
         }
     }
     
@@ -50,13 +39,5 @@ class PreferencesManager(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[FLOATING_LOG_ENABLED] = enabled
         }
-    }
-    
-    suspend fun getApiKeySync(): String {
-        var key = ""
-        context.dataStore.data.map { preferences ->
-            key = preferences[API_KEY] ?: ""
-        }
-        return key
     }
 }
