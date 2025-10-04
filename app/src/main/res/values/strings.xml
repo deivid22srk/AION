@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">AION - AI Controller</string>
+    <string name="accessibility_service_description">AION AI Controller permite que uma inteligência artificial controle seu dispositivo Android executando tarefas automatizadas como abrir aplicativos, rolar páginas, clicar em elementos e muito mais.</string>
+    
+    <string name="main_title">AION</string>
+    <string name="main_subtitle">AI Android Controller</string>
+    
+    <string name="accessibility_permission_title">Permissão de Acessibilidade</string>
+    <string name="accessibility_permission_description">Para que o AION funcione, você precisa ativar o serviço de acessibilidade nas configurações.</string>
+    <string name="open_accessibility_settings">Abrir Configurações de Acessibilidade</string>
+    <string name="accessibility_enabled">Serviço de Acessibilidade Ativo</string>
+    <string name="accessibility_disabled">Serviço de Acessibilidade Desativado</string>
+    
+    <string name="task_input_hint">Digite uma tarefa para a IA executar…</string>
+    <string name="execute_task">Executar Tarefa</string>
+    <string name="stop_task">Parar</string>
+    
+    <string name="settings">Configurações</string>
+    <string name="settings_title">Configurações do AION</string>
+    
+    <string name="api_key_title">Chave API OpenRouter</string>
+    <string name="api_key_hint">Cole sua chave API aqui</string>
+    <string name="api_key_description">Obtenha sua chave API gratuita em openrouter.ai</string>
+    <string name="api_key_saved">Chave API salva com sucesso</string>
+    
+    <string name="model_selection_title">Modelo de IA</string>
+    <string name="model_selection_description">Selecione um modelo gratuito para usar</string>
+    
+    <string name="status_idle">Aguardando comando</string>
+    <string name="status_processing">Processando tarefa…</string>
+    <string name="status_executing">Executando ação…</string>
+    <string name="status_completed">Tarefa concluída</string>
+    <string name="status_error">Erro ao executar tarefa</string>
+    
+    <string name="log_title">Log de Atividades</string>
+    <string name="clear_log">Limpar Log</string>
+    
+    <string name="error_no_api_key">Configure sua chave API nas configurações</string>
+    <string name="error_accessibility_disabled">Ative o serviço de acessibilidade primeiro</string>
+    <string name="error_network">Erro de rede. Verifique sua conexão.</string>
+    <string name="error_api">Erro na API: %s</string>
+    
+    <string name="example_tasks">Exemplos de Tarefas:</string>
+    <string name="example_1">Abrir o Chrome e pesquisar por \"receitas de bolo\"</string>
+    <string name="example_2">Abrir as configurações e ativar o modo avião</string>
+    <string name="example_3">Abrir a câmera e tirar uma foto</string>
+    
+    <string name="about">Sobre</string>
+    <string name="version">Versão %s</string>
+</resources>
