@@ -114,6 +114,7 @@ fun MainScreen(
     var selectedTab by remember { mutableStateOf(0) }
     val apiKey by preferencesManager.apiKey.collectAsState(initial = "")
     val selectedModel by preferencesManager.selectedModel.collectAsState(initial = PreferencesManager.DEFAULT_MODEL)
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     val service = getService()
     val taskStatus by (service?.taskStatus?.collectAsState() ?: remember { mutableStateOf(com.aion.aicontroller.data.TaskStatus(Status.IDLE)) })
@@ -166,12 +167,20 @@ fun MainScreen(
                     logs = logs
                 )
                 1 -> SettingsTab(
-                    context = this@MainActivity,
+                    context = context,
                     preferencesManager = preferencesManager,
                     apiKey = apiKey,
                     selectedModel = selectedModel,
                     getService = getService,
-                    openOverlaySettings = { openOverlaySettings() }
+                    openOverlaySettings = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            val intent = Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:${context.packageName}")
+                            )
+                            context.startActivity(intent)
+                        }
+                    }
                 )
             }
         }
