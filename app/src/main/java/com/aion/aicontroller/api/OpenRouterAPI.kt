@@ -80,7 +80,8 @@ object OpenRouterAPI {
     private const val BASE_URL = "https://openrouter.ai/"
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        level = HttpLoggingInterceptor.Level.BASIC
+        redactHeader("Authorization")
     }
     
     private val client = OkHttpClient.Builder()
