@@ -45,21 +45,9 @@ val AVAILABLE_FREE_MODELS = listOf(
         supportsVision = true
     ),
     FreeModel(
-        id = "meta-llama/llama-3.2-11b-vision-instruct:free",
-        name = "Llama 3.2 11B Vision",
-        description = "Modelo Meta com capacidades de visão",
-        supportsVision = true
-    ),
-    FreeModel(
         id = "google/gemma-3-27b-it:free",
         name = "Gemma 3 27B",
         description = "Modelo Google multimodal (27B parâmetros)",
-        supportsVision = true
-    ),
-    FreeModel(
-        id = "moonshotai/kimi-vl-a3b-thinking:free",
-        name = "Kimi VL A3B Thinking",
-        description = "Modelo com visão e raciocínio avançado",
         supportsVision = true
     ),
     FreeModel(
