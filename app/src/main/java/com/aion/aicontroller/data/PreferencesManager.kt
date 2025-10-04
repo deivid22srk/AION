@@ -19,7 +19,7 @@ class PreferencesManager(private val context: Context) {
         private val SELECTED_MODEL = stringPreferencesKey("selected_model")
         private val FLOATING_LOG_ENABLED = booleanPreferencesKey("floating_log_enabled")
         
-        const val DEFAULT_MODEL = "qwen/qwen2.5-vl-32b-instruct:free"
+        const val DEFAULT_MODEL = "google/gemini-2.0-flash-exp:free"
     }
     
     val apiKey: Flow<String> = context.dataStore.data.map { preferences ->
