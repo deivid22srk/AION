@@ -6,8 +6,7 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.tensorflow.lite.support.image.TensorImage
-import org.tensorflow.lite.task.gms.vision.TfLiteVision
-import org.tensorflow.lite.task.gms.vision.detector.ObjectDetector
+import org.tensorflow.lite.task.vision.detector.ObjectDetector
 import org.tensorflow.lite.task.vision.detector.Detection
 import java.io.File
 
@@ -40,8 +39,6 @@ class TFLiteVisionInference(private val context: Context) {
                 Log.e(TAG, "Arquivo de modelo não existe: $modelPath")
                 return@withContext false
             }
-            
-            TfLiteVision.initialize(context)
             
             val options = ObjectDetector.ObjectDetectorOptions.builder()
                 .setMaxResults(10)

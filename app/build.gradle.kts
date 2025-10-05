@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"
 }
 
 android {
@@ -48,10 +49,6 @@ android {
         viewBinding = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -92,12 +89,10 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     
     // TensorFlow Lite para modelos de visão locais
-    implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
-    implementation("com.google.android.gms:play-services-tflite-gpu:16.4.0")
-    implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
-    
-    // LiteRT LM para modelos multimodais locais
-    implementation("com.google.ai.edge.litertlm:litertlm:0.0.0-alpha01")
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.4")
     
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

@@ -1,118 +1,105 @@
 package com.aion.aicontroller.data
 
 /**
- * Modelos de Visão Local suportados
+ * Modelos de Visão Local suportados (TensorFlow Lite)
  * 
- * Baseado no Google AI Edge Gallery
+ * Versão simplificada focada apenas em TensorFlow Lite
+ * para máxima compatibilidade e estabilidade.
  */
 data class VisionModel(
     val id: String,
     val name: String,
     val description: String,
-    val type: ModelType,
     val url: String,
     val size: Long,
     val fileName: String,
-    val requiredFiles: List<String> = emptyList(),
-    val supportsVision: Boolean = true,
-    val supportsStreaming: Boolean = false,
-    val minRamMb: Int = 2048
+    val requiredFiles: List<RequiredFile> = emptyList(),
+    val minRamMb: Int = 1024,
+    val maxResults: Int = 10,
+    val scoreThreshold: Float = 0.3f
 )
 
-enum class ModelType {
-    TFLITE_VISION,      // TensorFlow Lite para detecção de objetos
-    LITERT_MULTIMODAL,  // LiteRT LM para visão + linguagem
-    GGUF_VISION         // Modelos GGUF com suporte a visão (LLaVA)
-}
+data class RequiredFile(
+    val name: String,
+    val url: String,
+    val size: Long
+)
 
 /**
- * Catálogo de modelos de visão disponíveis
+ * Catálogo de modelos de visão TensorFlow Lite
  */
 object VisionModelCatalog {
     
-    // Modelos TFLite para detecção de elementos UI
-    val MOBILENET_OBJECT_DETECTION = VisionModel(
-        id = "mobilenet_v1_detection",
-        name = "MobileNet V1 Object Detection",
-        description = "Modelo leve e rápido para detecção de elementos UI. Ideal para análise rápida de telas.",
-        type = ModelType.TFLITE_VISION,
-        url = "https://storage.googleapis.com/tfweb/app_gallery_models/mobilenet_v1.tflite",
-        size = 16900760L,
-        fileName = "mobilenet_v1_detector.tflite",
-        requiredFiles = listOf("mobilenet_labels_v1.txt"),
-        minRamMb = 1024
-    )
-    
-    val EFFICIENTDET_LITE = VisionModel(
+    val EFFICIENTDET_LITE0 = VisionModel(
         id = "efficientdet_lite0",
         name = "EfficientDet-Lite0",
-        description = "Detector de objetos eficiente e preciso. Bom balanço entre velocidade e precisão.",
-        type = ModelType.TFLITE_VISION,
+        description = "Modelo eficiente para detecção de objetos. Excelente balanço entre velocidade e precisão.",
         url = "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite",
         size = 4400000L,
         fileName = "efficientdet_lite0.tflite",
-        minRamMb = 1024
+        minRamMb = 1024,
+        maxResults = 10,
+        scoreThreshold = 0.3f
     )
     
-    // Modelos LiteRT Multimodais (visão + linguagem)
-    val GEMMA_2B_VISION = VisionModel(
-        id = "gemma_2b_vision",
-        name = "Gemma 2B Vision",
-        description = "Modelo multimodal compacto do Google. Analisa imagens e gera texto. Requer 3GB RAM.",
-        type = ModelType.LITERT_MULTIMODAL,
-        url = "https://huggingface.co/litert-community/gemma-2b-it-gpu-int4/resolve/main/gemma-2b-it-gpu-int4.bin",
-        size = 1700000000L,
-        fileName = "gemma_2b_vision.bin",
-        supportsStreaming = true,
-        minRamMb = 3072
+    val EFFICIENTDET_LITE2 = VisionModel(
+        id = "efficientdet_lite2",
+        name = "EfficientDet-Lite2",
+        description = "Versão mais precisa do EfficientDet. Recomendado para dispositivos com 4GB+ RAM.",
+        url = "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/int8/1/efficientdet_lite2.tflite",
+        size = 7200000L,
+        fileName = "efficientdet_lite2.tflite",
+        minRamMb = 2048,
+        maxResults = 15,
+        scoreThreshold = 0.25f
     )
     
-    val PALIGEMMA_3B = VisionModel(
-        id = "paligemma_3b",
-        name = "PaliGemma 3B",
-        description = "Modelo multimodal especializado em visão. Excelente para análise de UI. Requer 4GB RAM.",
-        type = ModelType.LITERT_MULTIMODAL,
-        url = "https://huggingface.co/litert-community/paligemma-3b-mix-224-gpu-int4/resolve/main/paligemma-3b-mix-224.bin",
-        size = 2100000000L,
-        fileName = "paligemma_3b.bin",
-        supportsStreaming = true,
-        minRamMb = 4096
+    val MOBILENET_V2 = VisionModel(
+        id = "mobilenet_v2",
+        name = "MobileNet V2",
+        description = "Modelo leve e rápido. Ideal para dispositivos com recursos limitados.",
+        url = "https://storage.googleapis.com/tfweb/app_gallery_models/mobilenet_v2.tflite",
+        size = 13978596L,
+        fileName = "mobilenet_v2.tflite",
+        requiredFiles = listOf(
+            RequiredFile(
+                name = "labels",
+                url = "https://raw.githubusercontent.com/leferrad/tensorflow-mobilenet/refs/heads/master/imagenet/labels.txt",
+                size = 21685L
+            )
+        ),
+        minRamMb = 1024,
+        maxResults = 5,
+        scoreThreshold = 0.4f
     )
     
-    // Modelos GGUF com visão (LLaVA)
-    val LLAVA_LLAMA3_2_1B = VisionModel(
-        id = "llava_llama3_2_1b",
-        name = "LLaVA Llama 3.2 1B",
-        description = "Modelo LLaVA ultra compacto baseado em Llama 3.2. Roda bem em dispositivos limitados.",
-        type = ModelType.GGUF_VISION,
-        url = "https://huggingface.co/xtuner/llava-llama-3.2-1b-vision-q4_k_m-gguf/resolve/main/llava-llama-3.2-1b-vision-q4_k_m.gguf",
-        size = 900000000L,
-        fileName = "llava_llama3_2_1b.gguf",
-        requiredFiles = listOf("mmproj-llama3-2-1b-f16.gguf"),
-        minRamMb = 2048
-    )
-    
-    val LLAVA_PHI3_MINI = VisionModel(
-        id = "llava_phi3_mini",
-        name = "LLaVA Phi-3 Mini",
-        description = "Modelo LLaVA compacto baseado em Phi-3. Excelente para dispositivos móveis.",
-        type = ModelType.GGUF_VISION,
-        url = "https://huggingface.co/xtuner/llava-phi-3-mini-gguf/resolve/main/llava-phi-3-mini-q4_k_m.gguf",
-        size = 2500000000L,
-        fileName = "llava_phi3_mini.gguf",
-        requiredFiles = listOf("mmproj-phi3-mini-f16.gguf"),
-        minRamMb = 3072
+    val SSD_MOBILENET_V1 = VisionModel(
+        id = "ssd_mobilenet_v1",
+        name = "SSD MobileNet V1",
+        description = "Detector de objetos rápido e compacto. Ótimo para análise de UI em tempo real.",
+        url = "https://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip",
+        size = 6900000L,
+        fileName = "detect.tflite",
+        requiredFiles = listOf(
+            RequiredFile(
+                name = "labels",
+                url = "https://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_labels.txt",
+                size = 999L
+            )
+        ),
+        minRamMb = 1024,
+        maxResults = 10,
+        scoreThreshold = 0.35f
     )
     
     /**
      * Lista de todos os modelos recomendados
      */
     val RECOMMENDED_MODELS = listOf(
-        MOBILENET_OBJECT_DETECTION,
-        EFFICIENTDET_LITE,
-        GEMMA_2B_VISION,
-        LLAVA_LLAMA3_2_1B,
-        LLAVA_PHI3_MINI
+        EFFICIENTDET_LITE0,
+        EFFICIENTDET_LITE2,
+        MOBILENET_V2,
+        SSD_MOBILENET_V1
     )
     
     /**
@@ -121,16 +108,25 @@ object VisionModelCatalog {
     val LIGHTWEIGHT_MODELS = RECOMMENDED_MODELS.filter { it.minRamMb < 2048 }
     
     /**
-     * Lista de modelos por tipo
+     * Modelo padrão recomendado
      */
-    fun getModelsByType(type: ModelType): List<VisionModel> {
-        return RECOMMENDED_MODELS.filter { it.type == type }
-    }
+    val DEFAULT_MODEL = EFFICIENTDET_LITE0
     
     /**
      * Busca modelo por ID
      */
     fun getModelById(id: String): VisionModel? {
         return RECOMMENDED_MODELS.find { it.id == id }
+    }
+    
+    /**
+     * Recomenda modelo baseado na RAM disponível
+     */
+    fun recommendModelForDevice(availableRamMb: Int): VisionModel {
+        return when {
+            availableRamMb < 2048 -> EFFICIENTDET_LITE0
+            availableRamMb < 4096 -> MOBILENET_V2
+            else -> EFFICIENTDET_LITE2
+        }
     }
 }
