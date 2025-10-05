@@ -94,8 +94,8 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.4")
     
-    // LiteRT-LM do Google para inferência multimodal (Visão + Texto)
-    implementation("com.google.ai.edge.litert:litert-llm:1.2.0")
+    // MediaPipe LLM Inference API - Google AI Edge (usa LiteRT internamente)
+    implementation("com.google.mediapipe:tasks-genai:0.10.27")
     
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

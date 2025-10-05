@@ -68,13 +68,13 @@ class AIControlService : Service() {
     
     fun setupLocalAI(modelPath: String, mmProjPath: String, isLiteRT: Boolean = true) {
         serviceScope.launch {
-            liteRTController = LiteRTMultimodalController(modelPath)
+            liteRTController = LiteRTMultimodalController(this@AIControlService, modelPath)
             val loaded = liteRTController?.initialize() ?: false
             
             if (loaded) {
-                addLog("✅ Modelo LiteRT-LM carregado com sucesso (GPU acceleration)")
+                addLog("✅ Modelo MediaPipe LLM Inference carregado com sucesso (GPU acceleration via LiteRT)")
             } else {
-                addLog("❌ Erro ao carregar modelo LiteRT-LM")
+                addLog("❌ Erro ao carregar modelo MediaPipe LLM Inference")
                 liteRTController = null
             }
         }
