@@ -191,22 +191,24 @@ val action = controller.analyzeScreenAndDecide(
 ## 📱 Requisitos do Sistema
 
 ### Mínimo (Detecção Básica)
-- Android 7.0+ (API 24)
+- **Android 12.0+ (API 31)** ⚠️ Obrigatório
 - 2 GB RAM
 - 1 GB espaço livre
 - ✅ Funciona: Modo VISION_ONLY
 
 ### Recomendado (Híbrido)
-- Android 10.0+ (API 29)
+- Android 12.0+ (API 31)
 - 4 GB RAM
 - 3 GB espaço livre
 - ✅ Funciona: Todos os modos
 
 ### Ideal (Full AI)
-- Android 12.0+ (API 31)
+- Android 13.0+ (API 33)
 - 6+ GB RAM
 - 5 GB espaço livre
 - ✅ Funciona: Modelos premium
+
+**Nota:** A biblioteca LiteRT requer Android 12 (API 31) como mínimo absoluto.
 
 ## 🔄 Integração com Sistema Existente
 

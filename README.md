@@ -45,7 +45,7 @@
 
 ### Pré-requisitos
 
-1. **Android 7.0 (API 24) ou superior**
+1. **Android 12.0 (API 31) ou superior**
 2. **Pelo menos 6 GB de espaço livre** (para modelos)
 3. **4 GB de RAM** recomendado
 4. **Permissão de Acessibilidade** ativada

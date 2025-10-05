@@ -125,6 +125,26 @@ A versão 2.0 integra modelos de visão local baseados no **Google AI Edge Galle
 - Maioria dos casos
 - Melhor experiência geral
 
+## 📱 Requisitos do Sistema
+
+### Requisitos Mínimos
+- **Android 12.0 (API 31) ou superior** ⚠️
+- **2 GB RAM** mínimo
+- **2 GB espaço livre** mínimo
+- **Java 21** para compilação do projeto
+
+### Requisitos Recomendados
+- **Android 12.0+ (API 31+)**
+- **4 GB RAM** ou mais
+- **3-5 GB espaço livre**
+- **Processador ARM64**
+
+### Requisitos Ideais
+- **Android 13.0+ (API 33+)**
+- **6-8 GB RAM**
+- **5+ GB espaço livre**
+- **Processador ARM64 com GPU**
+
 ## 🚀 Como Usar
 
 ### Instalação
@@ -135,11 +155,12 @@ git clone https://github.com/deivid22srk/AION.git
 cd AION
 ```
 
-2. **Compile o APK**
+2. **Compile o APK** (Requer Java 21)
 ```bash
 chmod +x gradlew
 ./gradlew assembleDebug
 ```
+**Nota:** O projeto requer Java 21 para compilar devido à biblioteca LiteRT
 
 3. **Instale no dispositivo**
 ```bash
