@@ -11,12 +11,10 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.aion.aicontroller.ai.LocalAIController
 import com.aion.aicontroller.ai.LiteRTMultimodalController
 import com.aion.aicontroller.data.Status
 import com.aion.aicontroller.data.TaskStatus
 import com.aion.aicontroller.data.AIAction
-import com.aion.aicontroller.local.LocalVisionInference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,12 +28,9 @@ class AIControlService : Service() {
     private val binder = LocalBinder()
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
     
-    private var aiController: LocalAIController? = null
     private var liteRTController: LiteRTMultimodalController? = null
-    private var visionInference: LocalVisionInference? = null
     private var isRunning = false
     private var floatingLogOverlay: FloatingLogOverlay? = null
-    private var isUsingLiteRT = false
     
     private val _taskStatus = MutableStateFlow(TaskStatus(Status.IDLE))
     val taskStatus: StateFlow<TaskStatus> = _taskStatus
@@ -71,53 +66,28 @@ class AIControlService : Service() {
         return START_STICKY
     }
     
-    fun setupLocalAI(modelPath: String, mmProjPath: String, isLiteRT: Boolean = false) {
-        if (isLiteRT) {
-            serviceScope.launch {
-                liteRTController = LiteRTMultimodalController(modelPath)
-                val loaded = liteRTController?.initialize() ?: false
-                
-                if (loaded) {
-                    isUsingLiteRT = true
-                    addLog("✅ Modelo LiteRT-LM carregado com sucesso (GPU acceleration)")
-                } else {
-                    addLog("❌ Erro ao carregar modelo LiteRT-LM")
-                    liteRTController = null
-                    isUsingLiteRT = false
-                }
-            }
-        } else {
-            visionInference = LocalVisionInference(this)
-            val loaded = visionInference?.loadModel(modelPath, mmProjPath) ?: false
+    fun setupLocalAI(modelPath: String, mmProjPath: String, isLiteRT: Boolean = true) {
+        serviceScope.launch {
+            liteRTController = LiteRTMultimodalController(modelPath)
+            val loaded = liteRTController?.initialize() ?: false
             
             if (loaded) {
-                aiController = LocalAIController(visionInference!!)
-                isUsingLiteRT = false
-                addLog("Modelo local carregado com sucesso")
+                addLog("✅ Modelo LiteRT-LM carregado com sucesso (GPU acceleration)")
             } else {
-                addLog("Erro ao carregar modelo local")
-                visionInference = null
-                aiController = null
+                addLog("❌ Erro ao carregar modelo LiteRT-LM")
+                liteRTController = null
             }
         }
     }
     
     fun unloadModel() {
-        visionInference?.unloadModel()
-        visionInference = null
-        aiController = null
         liteRTController?.unload()
         liteRTController = null
-        isUsingLiteRT = false
         addLog("Modelo descarregado")
     }
     
     fun isModelLoaded(): Boolean {
-        return if (isUsingLiteRT) {
-            liteRTController?.isReady() ?: false
-        } else {
-            visionInference?.isLoaded() ?: false
-        }
+        return liteRTController?.isReady() ?: false
     }
     
     fun executeTask(task: String) {
@@ -126,7 +96,7 @@ class AIControlService : Service() {
             return
         }
         
-        if (aiController == null && liteRTController == null) {
+        if (liteRTController == null) {
             addLog("IA não configurada. Configure nas opções.")
             _taskStatus.value = TaskStatus(Status.ERROR, "IA não configurada")
             return
@@ -168,19 +138,11 @@ class AIControlService : Service() {
                 }
                 
                 addLog("Enviando para IA analisar...")
-                val action: AIAction? = if (isUsingLiteRT) {
-                    liteRTController?.analyzeScreenAndDecide(
-                        screenshot!!,
-                        task,
-                        conversationHistory
-                    )
-                } else {
-                    aiController?.analyzeScreenAndDecide(
-                        screenshot!!,
-                        task,
-                        conversationHistory
-                    )
-                }
+                val action = liteRTController?.analyzeScreenAndDecide(
+                    screenshot!!,
+                    task,
+                    conversationHistory
+                )
                 
                 if (action == null) {
                     addLog("Erro: IA não retornou ação válida")

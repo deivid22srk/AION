@@ -18,7 +18,7 @@ class PreferencesManager(private val context: Context) {
         private val SELECTED_LOCAL_MODEL = stringPreferencesKey("selected_local_model")
         private val FLOATING_LOG_ENABLED = booleanPreferencesKey("floating_log_enabled")
         
-        const val DEFAULT_LOCAL_MODEL = "llava-v1.6-mistral-7b-q4"
+        const val DEFAULT_LOCAL_MODEL = "gemma3-1b-it"
     }
     
     val selectedLocalModel: Flow<String> = context.dataStore.data.map { preferences ->

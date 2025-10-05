@@ -241,11 +241,10 @@ fun MainTab(
     LaunchedEffect(selectedLocalModel, isModelDownloaded) {
         if (isModelDownloaded && selectedModel != null && !isModelLoaded) {
             val modelFile = modelManager.getModelFile(selectedModel)
-            val mmProjFile = modelManager.getMMProjFile(selectedModel)
             getService()?.setupLocalAI(
                 modelFile.absolutePath, 
-                mmProjFile.absolutePath,
-                selectedModel.isLiteRT
+                "",
+                true
             )
         }
     }
@@ -431,7 +430,7 @@ fun ModelsTab(
                         )
                     }
                     Text(
-                        "Modelos multimodais podem VER screenshots da tela E entender texto. Isso permite que a IA:",
+                        "Modelos multimodais podem VER screenshots da tela E entender texto usando inferência neural real. Isso permite que a IA:",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                     )
@@ -456,13 +455,13 @@ fun ModelsTab(
                         )
                     }
                     Text(
-                        "🔥 Modelos LiteRT: GPU acceleration + inferência neural real do Google",
+                        "🔥 Todos os modelos usam Google LiteRT-LM com GPU acceleration!",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        "💎 Modelos menores (1-3B) são mais rápidos e consomem menos memória!",
+                        "💎 Gemma 3 1B é o mais rápido e leve - perfeito para a maioria dos dispositivos!",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary
@@ -501,31 +500,11 @@ fun ModelsTab(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    model.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                if (model.isLiteRT) {
-                                    androidx.compose.foundation.layout.Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(MaterialTheme.colorScheme.primaryContainer)
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            "LiteRT",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
+                            Text(
+                                model.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
                             Text(
                                 model.description,
                                 fontSize = 12.sp,
@@ -547,14 +526,6 @@ fun ModelsTab(
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                 )
-                                if (model.isLiteRT) {
-                                    Text(
-                                        "• GPU Accelerated",
-                                        fontSize = 10.sp,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
                             }
                         }
                         
