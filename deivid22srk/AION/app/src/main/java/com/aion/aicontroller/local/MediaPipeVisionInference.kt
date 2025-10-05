@@ -105,12 +105,16 @@ class MediaPipeVisionInference(private val context: Context) {
             Log.d(TAG, "Gerando resposta assíncrona...")
             
             val fullResponse = StringBuilder()
+            val responseStream = inference.generateResponseAsync(fullPrompt)
             
-            inference.generateResponseAsync(fullPrompt).use { responseStream ->
-                for (partialResult in responseStream) {
-                    fullResponse.append(partialResult)
-                    onPartialResult(partialResult)
+            try {
+                while (responseStream.hasNext()) {
+                    val partialResult = responseStream.next()
+                    fullResponse.append(partialResult ?: "")
+                    onPartialResult(partialResult ?: "")
                 }
+            } finally {
+                responseStream.close()
             }
             
             Log.d(TAG, "Resposta assíncrona completa: ${fullResponse.length} caracteres")
