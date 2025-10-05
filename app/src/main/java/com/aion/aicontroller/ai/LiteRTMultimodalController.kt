@@ -69,11 +69,8 @@ class LiteRTMultimodalController(
             Log.d(TAG, "Prompt: $prompt")
             
             val responseBuilder = StringBuilder()
-            
-            llmInference?.generateResponseAsync(prompt)?.collect { partialResponse ->
-                responseBuilder.append(partialResponse)
-                Log.d(TAG, "Token: $partialResponse")
-            }
+            val result = llmInference?.generateResponse(prompt)
+            responseBuilder.append(result ?: "")
             
             val responseText = responseBuilder.toString().trim()
             Log.d(TAG, "Resposta completa: $responseText")
@@ -96,8 +93,14 @@ class LiteRTMultimodalController(
             throw IllegalStateException("Modelo não está carregado")
         }
         
-        llmInference?.generateResponseAsync(prompt)?.collect { partialResponse ->
-            emit(partialResponse)
+        try {
+            val result = llmInference?.generateResponse(prompt)
+            if (result != null) {
+                emit(result)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao gerar resposta: ${e.message}", e)
+            throw e
         }
     }
     
