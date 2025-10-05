@@ -91,6 +91,14 @@ dependencies {
     
     implementation("com.google.code.gson:gson:2.10.1")
     
+    // TensorFlow Lite para modelos de visão locais
+    implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
+    implementation("com.google.android.gms:play-services-tflite-gpu:16.4.0")
+    implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
+    
+    // LiteRT LM para modelos multimodais locais
+    implementation("com.google.ai.edge.litertlm:litertlm:0.0.0-alpha01")
+    
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
