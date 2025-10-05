@@ -24,7 +24,6 @@ class LocalModelManager(private val context: Context) {
     
     fun downloadModel(model: LocalVisionModel): Flow<DownloadProgress> {
         val modelFile = getModelFile(model)
-        val mmProjFile = getMMProjFile(model)
         
         return downloader.downloadModel(
             repoId = model.repoId,
@@ -45,8 +44,12 @@ class LocalModelManager(private val context: Context) {
     
     fun isModelDownloaded(model: LocalVisionModel): Boolean {
         val modelFile = getModelFile(model)
-        val mmProjFile = getMMProjFile(model)
         
+        if (model.isLiteRT) {
+            return downloader.checkModelExists(modelFile)
+        }
+        
+        val mmProjFile = getMMProjFile(model)
         return downloader.checkModelExists(modelFile) && 
                downloader.checkModelExists(mmProjFile)
     }
@@ -61,8 +64,12 @@ class LocalModelManager(private val context: Context) {
     
     fun deleteModel(model: LocalVisionModel): Boolean {
         val modelFile = getModelFile(model)
-        val mmProjFile = getMMProjFile(model)
         
+        if (model.isLiteRT) {
+            return downloader.deleteModel(modelFile)
+        }
+        
+        val mmProjFile = getMMProjFile(model)
         return downloader.deleteModel(modelFile) && downloader.deleteModel(mmProjFile)
     }
     
@@ -72,10 +79,14 @@ class LocalModelManager(private val context: Context) {
     
     fun getModelSize(model: LocalVisionModel): Long {
         val modelFile = getModelFile(model)
-        val mmProjFile = getMMProjFile(model)
         
         return if (isModelDownloaded(model)) {
-            modelFile.length() + mmProjFile.length()
+            if (model.isLiteRT) {
+                modelFile.length()
+            } else {
+                val mmProjFile = getMMProjFile(model)
+                modelFile.length() + mmProjFile.length()
+            }
         } else {
             0L
         }

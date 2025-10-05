@@ -7,10 +7,31 @@ data class LocalVisionModel(
     val repoId: String,
     val modelFilename: String,
     val mmProjFilename: String,
-    val estimatedSize: String
+    val estimatedSize: String,
+    val isLiteRT: Boolean = false
 )
 
 val AVAILABLE_LOCAL_MODELS = listOf(
+    LocalVisionModel(
+        id = "gemma-3n-1b-it",
+        name = "Gemma 3n 1B (LiteRT) 🔥",
+        description = "ULTRA RÁPIDO! Modelo multimodal oficial do Google com GPU acceleration - RECOMENDADO (0.5 GB)",
+        repoId = "google/gemma-3n-1b-it-gpu-int8",
+        modelFilename = "gemma-3n-1b-it-gpu-int8.bin",
+        mmProjFilename = "gemma-3n-1b-it-gpu-int8.bin",
+        estimatedSize = "0.5 GB",
+        isLiteRT = true
+    ),
+    LocalVisionModel(
+        id = "gemma-3n-2b-it",
+        name = "Gemma 3n 2B (LiteRT) ⚡",
+        description = "Modelo multimodal avançado do Google com inferência neural real (0.9 GB)",
+        repoId = "google/gemma-3n-2b-it-gpu-int8",
+        modelFilename = "gemma-3n-2b-it-gpu-int8.bin",
+        mmProjFilename = "gemma-3n-2b-it-gpu-int8.bin",
+        estimatedSize = "0.9 GB",
+        isLiteRT = true
+    ),
     LocalVisionModel(
         id = "llama-3.2-vision-1b-q4",
         name = "LLaMA 3.2 Vision 1B (Q4) ⚡",

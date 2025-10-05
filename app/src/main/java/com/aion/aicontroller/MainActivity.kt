@@ -242,7 +242,11 @@ fun MainTab(
         if (isModelDownloaded && selectedModel != null && !isModelLoaded) {
             val modelFile = modelManager.getModelFile(selectedModel)
             val mmProjFile = modelManager.getMMProjFile(selectedModel)
-            getService()?.setupLocalAI(modelFile.absolutePath, mmProjFile.absolutePath)
+            getService()?.setupLocalAI(
+                modelFile.absolutePath, 
+                mmProjFile.absolutePath,
+                selectedModel.isLiteRT
+            )
         }
     }
     
@@ -452,6 +456,12 @@ fun ModelsTab(
                         )
                     }
                     Text(
+                        "🔥 Modelos LiteRT: GPU acceleration + inferência neural real do Google",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
                         "💎 Modelos menores (1-3B) são mais rápidos e consomem menos memória!",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
@@ -491,11 +501,31 @@ fun ModelsTab(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                model.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    model.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                if (model.isLiteRT) {
+                                    androidx.compose.foundation.layout.Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(MaterialTheme.colorScheme.primaryContainer)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            "LiteRT",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
                             Text(
                                 model.description,
                                 fontSize = 12.sp,
@@ -517,6 +547,14 @@ fun ModelsTab(
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                 )
+                                if (model.isLiteRT) {
+                                    Text(
+                                        "• GPU Accelerated",
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                         }
                         
