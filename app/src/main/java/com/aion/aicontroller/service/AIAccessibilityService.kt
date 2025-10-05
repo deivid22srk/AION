@@ -176,6 +176,7 @@ class AIAccessibilityService : AccessibilityService() {
     }
     
     private fun performClick(x: Int, y: Int, callback: (Boolean) -> Unit) {
+        Log.d(TAG, "Executando click em ($x, $y)")
         val path = Path()
         path.moveTo(x.toFloat(), y.toFloat())
         
@@ -216,6 +217,7 @@ class AIAccessibilityService : AccessibilityService() {
     }
     
     private fun performTypeText(text: String, callback: (Boolean) -> Unit) {
+        Log.d(TAG, "Digitando texto: $text")
         try {
             val focusedNode = rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
             
@@ -236,6 +238,7 @@ class AIAccessibilityService : AccessibilityService() {
     }
     
     private fun performScroll(direction: String, amount: Int, callback: (Boolean) -> Unit) {
+        Log.d(TAG, "Executando scroll: direção=$direction, amount=$amount")
         val startX = screenWidth / 2f
         val startY = screenHeight / 2f
         
@@ -251,6 +254,7 @@ class AIAccessibilityService : AccessibilityService() {
     }
     
     private fun performSwipe(direction: String, callback: (Boolean) -> Unit) {
+        Log.d(TAG, "Executando swipe: direção=$direction")
         val startX = screenWidth / 2f
         val startY = screenHeight / 2f
         
@@ -295,39 +299,66 @@ class AIAccessibilityService : AccessibilityService() {
     
     private fun openApp(appName: String, callback: (Boolean) -> Unit) {
         try {
-            performGlobalAction(GLOBAL_ACTION_HOME)
+            Log.d(TAG, "Tentando abrir app: $appName")
+            val packageName = getPackageNameForApp(appName)
+            Log.d(TAG, "Package name: $packageName")
             
-            handler.postDelayed({
-                performGlobalAction(GLOBAL_ACTION_RECENTS)
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                setPackage(packageName)
+            }
+            
+            val resolveInfo = packageManager.queryIntentActivities(intent, 0)
+            if (resolveInfo.isNotEmpty()) {
+                val activityInfo = resolveInfo[0].activityInfo
+                val componentName = android.content.ComponentName(
+                    activityInfo.packageName,
+                    activityInfo.name
+                )
+                intent.component = componentName
+                startActivity(intent)
+                Log.d(TAG, "App $appName aberto com sucesso via ACTION_MAIN")
+                callback(true)
+            } else {
+                Log.e(TAG, "Não foi possível encontrar activities para: $appName")
+                Log.d(TAG, "Tentando método alternativo getLaunchIntent...")
                 
-                handler.postDelayed({
-                    val rootNode = rootInActiveWindow
-                    if (rootNode != null) {
-                        val appNode = findNodeByText(rootNode, appName)
-                        if (appNode != null) {
-                            appNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                            appNode.recycle()
-                            callback(true)
-                            return@postDelayed
-                        }
-                        rootNode.recycle()
-                    }
-                    
-                    val launchIntent = packageManager.getLaunchIntentForPackage(getPackageNameForApp(appName))
-                    if (launchIntent != null) {
-                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        startActivity(launchIntent)
-                        callback(true)
-                    } else {
-                        Log.e(TAG, "Could not find app: $appName")
-                        callback(false)
-                    }
-                }, 500)
-            }, 300)
+                val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(launchIntent)
+                    Log.d(TAG, "App $appName aberto com getLaunchIntent")
+                    callback(true)
+                } else {
+                    Log.e(TAG, "Todos os métodos falharam. Listando apps instalados...")
+                    listInstalledApps(appName)
+                    callback(false)
+                }
+            }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error opening app: ${e.message}", e)
+            Log.e(TAG, "Erro ao abrir app: ${e.message}", e)
             callback(false)
+        }
+    }
+    
+    private fun listInstalledApps(searchQuery: String) {
+        try {
+            val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+            val packages = packageManager.queryIntentActivities(mainIntent, 0)
+            Log.d(TAG, "Apps instalados que contêm '$searchQuery':")
+            packages.filter { 
+                it.activityInfo.packageName.contains(searchQuery, ignoreCase = true) ||
+                it.loadLabel(packageManager).toString().contains(searchQuery, ignoreCase = true)
+            }.forEach {
+                Log.d(TAG, "  - ${it.loadLabel(packageManager)} (${it.activityInfo.packageName})")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao listar apps: ${e.message}")
         }
     }
     

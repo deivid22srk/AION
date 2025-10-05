@@ -11,9 +11,10 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.aion.aicontroller.ai.AIController
+import com.aion.aicontroller.ai.LocalAIController
 import com.aion.aicontroller.data.Status
 import com.aion.aicontroller.data.TaskStatus
+import com.aion.aicontroller.local.LocalVisionInference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,8 +28,10 @@ class AIControlService : Service() {
     private val binder = LocalBinder()
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
     
-    private var aiController: AIController? = null
+    private var aiController: LocalAIController? = null
+    private var visionInference: LocalVisionInference? = null
     private var isRunning = false
+    private var floatingLogOverlay: FloatingLogOverlay? = null
     
     private val _taskStatus = MutableStateFlow(TaskStatus(Status.IDLE))
     val taskStatus: StateFlow<TaskStatus> = _taskStatus
@@ -56,6 +59,7 @@ class AIControlService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        floatingLogOverlay = FloatingLogOverlay(this)
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -63,9 +67,29 @@ class AIControlService : Service() {
         return START_STICKY
     }
     
-    fun setupAI(apiKey: String, modelId: String) {
-        aiController = AIController(apiKey, modelId)
-        addLog("IA configurada com modelo: $modelId")
+    fun setupLocalAI(modelPath: String, mmProjPath: String) {
+        visionInference = LocalVisionInference(this)
+        val loaded = visionInference?.loadModel(modelPath, mmProjPath) ?: false
+        
+        if (loaded) {
+            aiController = LocalAIController(visionInference!!)
+            addLog("Modelo local carregado com sucesso")
+        } else {
+            addLog("Erro ao carregar modelo local")
+            visionInference = null
+            aiController = null
+        }
+    }
+    
+    fun unloadModel() {
+        visionInference?.unloadModel()
+        visionInference = null
+        aiController = null
+        addLog("Modelo descarregado")
+    }
+    
+    fun isModelLoaded(): Boolean {
+        return visionInference?.isLoaded() ?: false
     }
     
     fun executeTask(task: String) {
@@ -180,6 +204,21 @@ class AIControlService : Service() {
     
     fun clearLogs() {
         _logs.value = emptyList()
+        floatingLogOverlay?.clearLogs()
+    }
+    
+    fun setFloatingLogEnabled(enabled: Boolean) {
+        if (enabled) {
+            floatingLogOverlay?.show()
+            addLog("Log flutuante ativado")
+        } else {
+            floatingLogOverlay?.hide()
+            addLog("Log flutuante desativado")
+        }
+    }
+    
+    fun isFloatingLogVisible(): Boolean {
+        return floatingLogOverlay?.isVisible() ?: false
     }
     
     private fun addLog(message: String) {
@@ -188,6 +227,7 @@ class AIControlService : Service() {
         val logMessage = "[$timestamp] $message"
         Log.d(TAG, message)
         _logs.value = _logs.value + logMessage
+        floatingLogOverlay?.addLog(logMessage)
     }
     
     private fun createNotificationChannel() {

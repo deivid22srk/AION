@@ -2,20 +2,19 @@ package com.aion.aicontroller.ai
 
 import android.graphics.Bitmap
 import android.util.Log
-import com.aion.aicontroller.api.*
 import com.aion.aicontroller.data.AIAction
 import com.aion.aicontroller.data.ActionType
+import com.aion.aicontroller.local.LocalVisionInference
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 
-class AIController(
-    private val apiKey: String,
-    private val modelId: String
+class LocalAIController(
+    private val inference: LocalVisionInference
 ) {
     private val gson = Gson()
     
     companion object {
-        private const val TAG = "AIController"
+        private const val TAG = "LocalAIController"
         
         private const val SYSTEM_PROMPT = """Você é um assistente de IA especializado em controlar dispositivos Android.
 
@@ -67,66 +66,32 @@ LEMBRE-SE: Responda APENAS com o JSON, sem texto adicional antes ou depois."""
         conversationHistory: List<String> = emptyList()
     ): AIAction? {
         try {
-            val base64Image = OpenRouterAPI.bitmapToBase64(screenshot)
-            val imageUrl = OpenRouterAPI.createImageDataUrl(base64Image)
-            
-            val messages = mutableListOf<Message>()
-            
-            messages.add(
-                Message(
-                    role = "system",
-                    content = listOf(ContentPart.Text(text = SYSTEM_PROMPT))
-                )
-            )
-            
-            conversationHistory.forEach { historyItem ->
-                messages.add(
-                    Message(
-                        role = "assistant",
-                        content = listOf(ContentPart.Text(text = historyItem))
-                    )
-                )
+            val historyContext = if (conversationHistory.isNotEmpty()) {
+                "\n\nHistórico de ações anteriores:\n${conversationHistory.joinToString("\n")}"
+            } else {
+                ""
             }
             
-            messages.add(
-                Message(
-                    role = "user",
-                    content = listOf(
-                        ContentPart.Text(text = "Tarefa: $task\n\nAnálise da tela atual:"),
-                        ContentPart.ImageUrl(
-                            imageUrl = ImageUrlData(url = imageUrl)
-                        )
-                    )
-                )
+            val fullPrompt = """$SYSTEM_PROMPT
+
+Tarefa: $task$historyContext
+
+Analise a imagem da tela e responda com um JSON válido indicando a próxima ação."""
+            
+            Log.d(TAG, "Analisando tela com modelo local...")
+            
+            val response = inference.generateResponse(
+                image = screenshot,
+                prompt = fullPrompt,
+                temperature = 0.7f
             )
             
-            val request = ChatRequest(
-                model = modelId,
-                messages = messages,
-                temperature = 0.5,
-                maxTokens = 1000
-            )
-            
-            Log.d(TAG, "Enviando requisição para OpenRouter...")
-            
-            val response = OpenRouterAPI.service.chat(
-                authorization = "Bearer $apiKey",
-                request = request
-            )
-            
-            if (response.isSuccessful) {
-                val responseBody = response.body()
-                val content = responseBody?.choices?.firstOrNull()?.message?.content
-                
-                Log.d(TAG, "Resposta da IA: $content")
-                
-                if (content != null) {
-                    return parseAIResponse(content)
-                } else {
-                    Log.e(TAG, "Resposta vazia da API")
-                }
+            if (response != null) {
+                Log.d(TAG, "Resposta do modelo recebida")
+                Log.d(TAG, "Conteúdo: $response")
+                return parseAIResponse(response)
             } else {
-                Log.e(TAG, "Erro na API: ${response.code()} - ${response.errorBody()?.string()}")
+                Log.e(TAG, "Resposta vazia do modelo")
             }
             
         } catch (e: Exception) {
@@ -138,13 +103,28 @@ LEMBRE-SE: Responda APENAS com o JSON, sem texto adicional antes ou depois."""
     
     private fun parseAIResponse(response: String): AIAction? {
         try {
+            Log.d(TAG, "Fazendo parse da resposta...")
             val cleanedResponse = response.trim()
                 .removePrefix("```json")
                 .removePrefix("```")
                 .removeSuffix("```")
                 .trim()
             
-            val jsonResponse = gson.fromJson(cleanedResponse, AIResponse::class.java)
+            val jsonStart = cleanedResponse.indexOf("{")
+            val jsonEnd = cleanedResponse.lastIndexOf("}") + 1
+            
+            val jsonOnly = if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                cleanedResponse.substring(jsonStart, jsonEnd)
+            } else {
+                cleanedResponse
+            }
+            
+            Log.d(TAG, "JSON extraído: $jsonOnly")
+            
+            val jsonResponse = gson.fromJson(jsonOnly, AIResponse::class.java)
+            
+            Log.d(TAG, "Ação parseada: ${jsonResponse.action}")
+            Log.d(TAG, "Reasoning: ${jsonResponse.reasoning}")
             
             val actionType = try {
                 ActionType.valueOf(jsonResponse.action.uppercase())
@@ -153,7 +133,7 @@ LEMBRE-SE: Responda APENAS com o JSON, sem texto adicional antes ou depois."""
                 return null
             }
             
-            return AIAction(
+            val action = AIAction(
                 type = actionType,
                 target = jsonResponse.target,
                 x = jsonResponse.x,
@@ -163,11 +143,15 @@ LEMBRE-SE: Responda APENAS com o JSON, sem texto adicional antes ou depois."""
                 amount = jsonResponse.amount
             )
             
+            Log.d(TAG, "Ação criada com sucesso: $action")
+            return action
+            
         } catch (e: JsonSyntaxException) {
             Log.e(TAG, "Erro ao fazer parse da resposta JSON: ${e.message}")
             Log.e(TAG, "Resposta recebida: $response")
         } catch (e: Exception) {
             Log.e(TAG, "Erro inesperado ao processar resposta: ${e.message}", e)
+            Log.e(TAG, "Resposta completa: $response")
         }
         
         return null

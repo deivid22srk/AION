@@ -1,48 +1,92 @@
 package com.aion.aicontroller.data
 
-data class FreeModel(
+data class LocalVisionModel(
     val id: String,
     val name: String,
     val description: String,
-    val supportsVision: Boolean
+    val repoId: String,
+    val modelFilename: String,
+    val mmProjFilename: String,
+    val estimatedSize: String,
+    val modelType: ModelType = ModelType.GGUF_LLAVA
 )
 
-val AVAILABLE_FREE_MODELS = listOf(
-    FreeModel(
-        id = "qwen/qwen2.5-vl-72b-instruct:free",
-        name = "Qwen 2.5 VL 72B",
-        description = "Modelo multimodal poderoso com visão (72B parâmetros)",
-        supportsVision = true
+enum class ModelType {
+    GGUF_LLAVA,
+    MEDIAPIPE_GEMMA,
+    LITERT_TFLITE
+}
+
+val AVAILABLE_LOCAL_MODELS = listOf(
+    LocalVisionModel(
+        id = "gemma-2b-it",
+        name = "Gemma 2B Instruct (Google AI Edge)",
+        description = "Modelo compacto do Google com MediaPipe - RECOMENDADO (1.5 GB)",
+        repoId = "google/gemma-2b-it-cpu-int4",
+        modelFilename = "gemma-2b-it-cpu-int4.bin",
+        mmProjFilename = "",
+        estimatedSize = "1.5 GB",
+        modelType = ModelType.MEDIAPIPE_GEMMA
     ),
-    FreeModel(
-        id = "qwen/qwen2.5-vl-32b-instruct:free",
-        name = "Qwen 2.5 VL 32B",
-        description = "Modelo multimodal equilibrado com visão (32B parâmetros)",
-        supportsVision = true
+    LocalVisionModel(
+        id = "paligemma-3b-mix-224",
+        name = "PaliGemma 3B (Google AI Edge)",
+        description = "Modelo de visão do Google com MediaPipe - NOVO (1.8 GB)",
+        repoId = "google/paligemma-3b-mix-224",
+        modelFilename = "paligemma-3b-mix-224.bin",
+        mmProjFilename = "",
+        estimatedSize = "1.8 GB",
+        modelType = ModelType.MEDIAPIPE_GEMMA
     ),
-    FreeModel(
-        id = "meta-llama/llama-3.2-11b-vision-instruct:free",
-        name = "Llama 3.2 11B Vision",
-        description = "Modelo Meta com capacidades de visão",
-        supportsVision = true
+    LocalVisionModel(
+        id = "llava-v1.6-mistral-7b-q4",
+        name = "LLaVA 1.6 Mistral 7B (Q4)",
+        description = "Modelo de visão compacto e rápido (4.37 GB)",
+        repoId = "cjpais/llava-1.6-mistral-7b-gguf",
+        modelFilename = "llava-v1.6-mistral-7b.Q4_K_M.gguf",
+        mmProjFilename = "mmproj-model-f16.gguf",
+        estimatedSize = "4.37 GB",
+        modelType = ModelType.GGUF_LLAVA
     ),
-    FreeModel(
-        id = "google/gemma-3-27b-it:free",
-        name = "Gemma 3 27B",
-        description = "Modelo Google multimodal (27B parâmetros)",
-        supportsVision = true
+    LocalVisionModel(
+        id = "llava-v1.6-vicuna-7b-q4",
+        name = "LLaVA 1.6 Vicuna 7B (Q4)",
+        description = "Modelo de visão equilibrado (4.37 GB)",
+        repoId = "cjpais/llava-v1.6-vicuna-7b-gguf",
+        modelFilename = "llava-v1.6-vicuna-7b.Q4_K_M.gguf",
+        mmProjFilename = "mmproj-model-f16.gguf",
+        estimatedSize = "4.37 GB",
+        modelType = ModelType.GGUF_LLAVA
     ),
-    FreeModel(
-        id = "deepseek/deepseek-chat-v3.1:free",
-        name = "DeepSeek V3.1",
-        description = "Modelo de raciocínio híbrido (671B total, 37B ativo)",
-        supportsVision = false
+    LocalVisionModel(
+        id = "llava-v1.5-7b-q4",
+        name = "LLaVA 1.5 7B (Q4)",
+        description = "Versão clássica estável (4.08 GB)",
+        repoId = "mys/ggml_llava-v1.5-7b",
+        modelFilename = "ggml-model-q4_k.gguf",
+        mmProjFilename = "mmproj-model-f16.gguf",
+        estimatedSize = "4.08 GB",
+        modelType = ModelType.GGUF_LLAVA
     ),
-    FreeModel(
-        id = "z-ai/glm-4.5-air:free",
-        name = "GLM 4.5 Air",
-        description = "Modelo leve para agentes (MoE)",
-        supportsVision = false
+    LocalVisionModel(
+        id = "bakllava-1-q4",
+        name = "BakLLaVA 1 7B (Q4)",
+        description = "Especializado em tarefas visuais (4.37 GB)",
+        repoId = "mys/ggml_bakllava-1",
+        modelFilename = "ggml-model-q4_k.gguf",
+        mmProjFilename = "mmproj-model-f16.gguf",
+        estimatedSize = "4.37 GB",
+        modelType = ModelType.GGUF_LLAVA
+    ),
+    LocalVisionModel(
+        id = "llava-phi-3-mini-q4",
+        name = "LLaVA Phi-3 Mini (Q4)",
+        description = "Modelo ultra compacto da Microsoft (2.5 GB)",
+        repoId = "xtuner/llava-phi-3-mini-gguf",
+        modelFilename = "llava-phi-3-mini-int4.gguf",
+        mmProjFilename = "llava-phi-3-mini-mmproj-f16.gguf",
+        estimatedSize = "2.5 GB",
+        modelType = ModelType.GGUF_LLAVA
     )
 )
 

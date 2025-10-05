@@ -91,6 +91,15 @@ dependencies {
     
     implementation("com.google.code.gson:gson:2.10.1")
     
+    // MediaPipe LLM Inference API - Google AI Edge
+    implementation("com.google.mediapipe:tasks-genai:0.10.14")
+    
+    // LiteRT (TensorFlow Lite) para modelos de visão
+    implementation("com.google.ai.edge.litert:litert-api:1.0.1")
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
