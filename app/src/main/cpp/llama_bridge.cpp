@@ -36,10 +36,17 @@ struct LlamaBridge::Impl {
     }
     
     std::string processPrompt(const std::string& prompt, const std::string& imagePath) {
-        LOGI("Processing prompt with image: %s", imagePath.c_str());
+        LOGI("[MULTIMODAL] Processing prompt with image: %s", imagePath.c_str());
+        LOGI("[MULTIMODAL] Full prompt: %s", prompt.c_str());
+        
+        // NOTA: Este é um processador híbrido que usa análise de texto + contexto visual
+        // Para modelos multimodais completos (LLaVA, MiniCPM-V, etc.), a imagem seria
+        // processada por um encoder de visão (CLIP) e fusionada com embeddings de texto.
+        // Atualmente estamos usando regras + validação GGUF para demonstração.
         
         std::ostringstream response;
         
+        // Extrair tarefa do prompt multimodal
         if (prompt.find("Tarefa:") != std::string::npos) {
             size_t taskStart = prompt.find("Tarefa:") + 8;
             size_t taskEnd = prompt.find("\n", taskStart);

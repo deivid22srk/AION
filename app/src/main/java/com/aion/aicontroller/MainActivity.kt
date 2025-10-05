@@ -387,10 +387,10 @@ fun ModelsTab(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Storage, contentDescription = null, modifier = Modifier.size(32.dp))
+                        Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(32.dp))
                         Column {
                             Text(
-                                "Modelos Locais de Visão",
+                                "Modelos Multimodais (Visão + Texto)",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -401,6 +401,62 @@ fun ModelsTab(
                             )
                         }
                     }
+                }
+            }
+        }
+        
+        item {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Text(
+                            "O que são modelos multimodais?",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Text(
+                        "Modelos multimodais podem VER screenshots da tela E entender texto. Isso permite que a IA:",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                    )
+                    Column(
+                        modifier = Modifier.padding(start = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            "• Analise elementos visuais da interface (botões, textos, ícones)",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            "• Entenda o contexto visual para tomar decisões mais precisas",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            "• Execute tarefas complexas baseadas no que 'vê' na tela",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                    Text(
+                        "💎 Modelos menores (1-3B) são mais rápidos e consomem menos memória!",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }

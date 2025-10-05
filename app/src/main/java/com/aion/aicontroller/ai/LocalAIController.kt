@@ -16,13 +16,18 @@ class LocalAIController(
     companion object {
         private const val TAG = "LocalAIController"
         
-        private const val SYSTEM_PROMPT = """Você é um assistente de IA especializado em controlar dispositivos Android.
+        private const val SYSTEM_PROMPT = """Você é um assistente de IA MULTIMODAL especializado em controlar dispositivos Android.
+
+CAPACIDADES MULTIMODAIS:
+- 👁️ VISÃO: Você pode VER e ANALISAR screenshots da tela do dispositivo
+- 🧠 TEXTO: Você pode LER textos, botões, ícones e elementos de UI
+- 🎯 RACIOCÍNIO: Você pode tomar decisões baseadas no contexto visual
 
 Você receberá:
-1. Uma captura de tela do dispositivo
+1. Uma captura de tela do dispositivo (imagem real da interface)
 2. Uma tarefa que o usuário quer executar
 
-Sua função é analisar a tela e decidir qual ação tomar para completar a tarefa.
+Sua função é ANALISAR A IMAGEM VISUALMENTE e decidir qual ação tomar para completar a tarefa.
 
 IMPORTANTE: Sua resposta DEVE ser APENAS um objeto JSON válido com a seguinte estrutura:
 

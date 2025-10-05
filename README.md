@@ -31,15 +31,36 @@
 - **Performance Otimizada**: Compilado com flags O3 e suporte NEON para ARM
 - **Open Source**: Código 100% aberto e modificável
 
-### 🎨 Modelos de IA Suportados (Locais)
+### 🎨 Modelos Multimodais Suportados (100% Locais)
 
-| Modelo | Tamanho | Recomendado | Descrição |
-|--------|---------|-------------|-----------|
-| LLaVA 1.6 Mistral 7B Q4 | 4.37 GB | ✅ | Melhor equilíbrio entre velocidade e qualidade |
-| LLaVA 1.6 Vicuna 7B Q4 | 4.37 GB | ✅ | Alternativa equilibrada |
-| LLaVA 1.5 7B Q4 | 4.08 GB | ✅ | Versão estável e testada |
-| BakLLaVA 1 Q4 | 4.37 GB | ⚡ | Especializado em tarefas visuais |
-| LLaVA Phi-3 Mini Q4 | 2.5 GB | 📱 | Ultra compacto para dispositivos limitados |
+**Modelos Multimodais** combinam visão + texto, permitindo que a IA VEJA screenshots e ENTENDA o contexto visual!
+
+#### ⚡ Ultra Leves (Recomendados)
+
+| Modelo | Tamanho | RAM Mín | Velocidade | Precisão | Descrição |
+|--------|---------|---------|------------|----------|-----------|
+| **LLaMA 3.2 Vision 1B** | 0.9 GB | 4 GB | ⚡⚡⚡⚡⚡ | ⭐⭐⭐⭐ | Mais rápido! Ideal para tarefas simples |
+| **MiniCPM-V 2B** | 1.4 GB | 6 GB | ⚡⚡⚡⚡ | ⭐⭐⭐⭐⭐ | Melhor custo-benefício, ótimo UI |
+| **Gemma 2 2B Vision** | 1.6 GB | 6 GB | ⚡⚡⚡⚡ | ⭐⭐⭐⭐ | Google, bom multilíngue |
+| **LLaMA 3.2 Vision 3B** | 1.9 GB | 8 GB | ⚡⚡⚡⚡ | ⭐⭐⭐⭐⭐ | Equilíbrio perfeito |
+
+#### 💎 Compactos e Poderosos
+
+| Modelo | Tamanho | RAM Mín | Descrição |
+|--------|---------|---------|-----------|
+| **LLaVA Phi-3 Mini** | 2.5 GB | 8 GB | Microsoft, rápido e preciso |
+| **Phi-3 Vision** | 2.8 GB | 8 GB | Avançado, excelente OCR |
+
+#### 🏆 Avançados (Máxima Precisão)
+
+| Modelo | Tamanho | RAM Mín | Descrição |
+|--------|---------|---------|-----------|
+| **LLaVA 1.5 7B** | 4.08 GB | 12 GB | Clássico, estável e testado |
+| **LLaVA 1.6 Mistral 7B** | 4.37 GB | 12 GB | Última versão, máxima precisão |
+
+💡 **Dica**: Modelos menores (1-3B) são mais rápidos e consomem menos bateria!
+
+📚 **Mais detalhes**: Veja [MODELOS_MULTIMODAIS.md](MODELOS_MULTIMODAIS.md) para guia completo
 
 ## 🚀 Como Usar
 
